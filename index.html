@@ -751,6 +751,33 @@
 </div>
 
 <!-- ════════ MODAL CONFIGURACIÓN ════════ -->
+<!-- Modal: Completar desde Falla -->
+<div class="modal-bg" id="fillFallaModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title">⚡ Completar desde Falla</div>
+    <div class="modal-desc">Selecciona una falla pendiente o en proceso para pre-rellenar el formulario de mantenimiento.</div>
+    <div style="margin-bottom:10px">
+      <input type="text" id="ff-search" placeholder="Buscar por placa, descripción o N° doc…" oninput="renderFallaPickList()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surf-1);color:var(--text-hi);font-size:13px">
+    </div>
+    <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:6px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--surf-2);position:sticky;top:0">
+          <th style="padding:8px 10px;text-align:left">N° Doc</th>
+          <th style="padding:8px 10px;text-align:left">Placa</th>
+          <th style="padding:8px 10px;text-align:left">Personal</th>
+          <th style="padding:8px 10px;text-align:left">Sistema</th>
+          <th style="padding:8px 10px;text-align:left">Estado</th>
+          <th style="padding:8px 10px;width:60px"></th>
+        </tr></thead>
+        <tbody id="ff-list"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="closeFillModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="cfgModal">
   <div class="modal">
     <div class="modal-title">⚙ Configuración</div>
@@ -947,6 +974,14 @@
           <div class="form-eyebrow">Transportes SSI S.A.C.</div>
           <div class="form-title">Registro de Mantenimiento</div>
         </div>
+        <!-- Botón completar desde falla -->
+        <div style="margin-bottom:10px">
+          <button type="button" class="btn btn-sec" onclick="openFillFromFalla()" title="Pre-rellena el formulario con datos de una falla existente">
+            ⚡ Completar desde Falla
+          </button>
+          <span style="font-size:11px;color:var(--text-lo);margin-left:8px">Selecciona una falla para pre-rellenar placa, KM, técnico y sistema</span>
+        </div>
+
         <form id="formMant" onsubmit="submitMant(event)">
           <!-- Fila 1: encabezado -->
           <div class="form-row fr3">
@@ -1084,9 +1119,10 @@
 
       <!-- Tabs -->
       <div class="cat-tabs">
-        <div class="cat-tab active" onclick="catTab(this,'ct-personal')">👤 Personal / Técnicos</div>
+        <div class="cat-tab active" onclick="catTab(this,'ct-personal')">🔧 Técnicos Mant.</div>
         <div class="cat-tab" onclick="catTab(this,'ct-unidades')">🚛 Unidades (Placas)</div>
         <div class="cat-tab" onclick="catTab(this,'ct-talleres')">🔧 Talleres / Lugares</div>
+        <div class="cat-tab" onclick="catTab(this,'ct-codigos')">🔢 Códigos de Falla</div>
       </div>
 
       <!-- ── Panel Personal ── -->
@@ -1126,34 +1162,13 @@
       <!-- ── Panel Unidades ── -->
       <div id="ct-unidades" class="cat-panel">
         <div id="catUnidadAlert"></div>
-        <div class="cat-add-form">
-          <div class="fg" style="flex:0 1 110px">
-            <label>Placa</label>
-            <input type="text" id="cu-placa" placeholder="Ej: B3Z868" autocomplete="off" style="text-transform:uppercase">
-          </div>
-          <div class="fg" style="flex:3 1 200px">
-            <label>Descripción</label>
-            <input type="text" id="cu-desc" placeholder="Ej: Freightliner M2 112 2013">
-          </div>
-          <div class="fg">
-            <label>Tipo</label>
-            <select id="cu-tipo">
-              <option value="">Seleccionar…</option>
-              <option>TRACTO</option>
-              <option>CARRETA</option>
-              <option>CAMIÓN</option>
-              <option>CAMIONETA</option>
-              <option>OTRO</option>
-            </select>
-          </div>
-          <div style="padding-bottom:1px">
-            <button class="btn btn-prim" onclick="catAddPlaca()">+ Agregar</button>
-          </div>
-        </div>
+        <p style="font-size:12px;color:var(--text-lo);margin:0 0 10px;padding:8px 12px;background:var(--bg2);border-radius:6px;border-left:3px solid var(--accent)">
+          📋 <strong>Solo lectura</strong> — Las unidades se gestionan desde el sistema principal. Los datos se cargan directamente desde la base de datos compartida.
+        </p>
         <div class="cat-counter" id="cnt-unidades"></div>
         <div class="tbl-wrap">
           <table class="cat-tbl">
-            <thead><tr><th style="width:15%">Placa</th><th>Descripción</th><th style="width:15%">Tipo</th><th style="width:60px"></th></tr></thead>
+            <thead><tr><th style="width:15%">Placa</th><th>Descripción</th><th style="width:15%">Tipo</th></tr></thead>
             <tbody id="tb-unidades"></tbody>
           </table>
         </div>
@@ -1176,6 +1191,38 @@
           <table class="cat-tbl">
             <thead><tr><th>Nombre</th><th style="width:60px"></th></tr></thead>
             <tbody id="tb-talleres"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Panel Códigos de Falla ── -->
+      <div id="ct-codigos" class="cat-panel">
+        <div id="catCodigoAlert"></div>
+        <p style="font-size:12px;color:var(--text-lo);margin:0 0 10px">
+          Catálogo de códigos de falla. Agrégalos también a la hoja <strong>CODIGOS</strong> de tu Google Sheets (columnas: CODIGO · SISTEMA · COMPONENTE) para tenerlos respaldados.
+        </p>
+        <div class="cat-add-form">
+          <div class="fg" style="flex:0 1 80px">
+            <label>Código</label>
+            <input type="number" id="cc-cod" placeholder="201" min="1" autocomplete="off">
+          </div>
+          <div class="fg" style="flex:1 1 160px">
+            <label>Sistema</label>
+            <input type="text" id="cc-sis" placeholder="Ej: MOTOR" autocomplete="off" style="text-transform:uppercase">
+          </div>
+          <div class="fg" style="flex:3 1 240px">
+            <label>Componente</label>
+            <input type="text" id="cc-comp" placeholder="Ej: FILTRO DE ACEITE" autocomplete="off" style="text-transform:uppercase">
+          </div>
+          <div style="padding-bottom:1px">
+            <button class="btn btn-prim" onclick="catAddCodigo()">+ Agregar</button>
+          </div>
+        </div>
+        <div class="cat-counter" id="cnt-codigos"></div>
+        <div class="tbl-wrap">
+          <table class="cat-tbl">
+            <thead><tr><th style="width:8%">Cód.</th><th style="width:30%">Sistema</th><th>Componente</th><th style="width:60px"></th></tr></thead>
+            <tbody id="tb-codigos"></tbody>
           </table>
         </div>
       </div>
@@ -1316,7 +1363,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7MzMKMvv8dOA_a4xET
 const S = {
   url:  SCRIPT_URL,
   user: localStorage.getItem('ssi_user') || 'USUARIO',
-  fallas:[], mants:[], placas:[], personal:[],
+  fallas:[], mants:[], placas:[], personal:[], tecnicos:[],
   fFilt:[], mFilt:[],
   fPage:1, mPage:1, PER:20,
   charts:{}, fIdx:0, mIdx:0
@@ -1488,11 +1535,13 @@ async function loadCatalogs() {
   _fillPlacas();
   _fillPersonalLocal();
   try {
-    const [pl, pe] = await Promise.all([api({action:'getPlacas'}), api({action:'getPersonal'})]);
+    const [pl, pe, te] = await Promise.all([api({action:'getPlacas'}), api({action:'getPersonal'}), api({action:'getTecnicos'})]);
     const placas   = (pl.data||[]).slice(1).filter(r=>r[0]);
     const personal = (pe.data||[]).slice(1).filter(r=>r[0]);
+    const tecnicos = (te.data||[]).slice(1).filter(r=>r[0]);
     if (placas.length)   { S.placas   = placas;   CAT.placas   = placas;   _fillPlacas(); }
-    if (personal.length) { S.personal = personal; CAT.personal = personal; _fillPersonalLocal(); }
+    if (personal.length) { S.personal = personal; CAT.personal = personal; _fillPersonalSel(); }
+    if (tecnicos.length) { S.tecnicos = tecnicos; CAT.tecnicos = tecnicos; _fillTecnicosSel(); }
   } catch(e) { console.warn('Catálogos (usando locales):', e); }
 }
 function _fillPlacas() {
@@ -1519,15 +1568,17 @@ function _fillPlacas() {
     src.forEach(x=>{const o=document.createElement('option');o.value=x.v;o.textContent=x.v;el.appendChild(o);});
   });
 }
-function _fillPersonalLocal() {
-  const src = S.personal.length ? S.personal : [];
-  ['f-personal','m-tecnico'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const ph=id==='f-personal'?'Seleccionar personal…':'Seleccionar técnico…';
-    el.innerHTML=`<option value="">${ph}</option>`;
-    src.forEach(r=>{if(r[0]){const o=document.createElement('option');o.value=o.textContent=r[0];el.appendChild(o);}});
-  });
+function _fillPersonalSel() {
+  const el=document.getElementById('f-personal'); if(!el) return;
+  el.innerHTML='<option value="">Seleccionar personal…</option>';
+  S.personal.forEach(r=>{if(r[0]){const o=document.createElement('option');o.value=o.textContent=r[0];el.appendChild(o);}});
 }
+function _fillTecnicosSel() {
+  const el=document.getElementById('m-tecnico'); if(!el) return;
+  el.innerHTML='<option value="">Seleccionar técnico…</option>';
+  S.tecnicos.forEach(r=>{if(r[0]){const o=document.createElement('option');o.value=o.textContent=r[0];el.appendChild(o);}});
+}
+function _fillPersonalLocal() { _fillPersonalSel(); _fillTecnicosSel(); }
 function fillSel(id, data, col, ph) {
   const s = document.getElementById(id); if (!s) return;
   s.innerHTML = `<option value="">${ph}</option>`;
@@ -1946,7 +1997,7 @@ function demo() {
 const TALLERES_DEFAULT = ['SSI','TALLER EXTERNO','TRIPLE E TRUCKS','TIMO','J & T TRANSPORTE DE CARGA','RECTIFICACIONES EMANUEL SG'];
 
 // Estado local de catálogos
-const CAT = { personal:[], placas:[], talleres:[] };
+const CAT = { personal:[], tecnicos:[], placas:[], talleres:[] };
 
 function catTab(el, panelId) {
   document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active'));
@@ -1960,42 +2011,43 @@ async function loadCatalogosSection() {
     // Sin conexión: cargar desde PLACAS_SSI y arreglos por defecto
     CAT.placas   = PLACAS_SSI.map(p=>[p.p, p.d, p.t]);
     CAT.talleres = [...TALLERES_DEFAULT];
-    renderCatPersonal(); renderCatUnidades(); renderCatTalleres();
+    renderCatTecnicos(); renderCatUnidades(); renderCatTalleres();
     return;
   }
   try {
-    const [pe, pl, lu] = await Promise.all([
-      api({action:'getPersonal'}),
+    const [te, pl, lu] = await Promise.all([
+      api({action:'getTecnicos'}),
       api({action:'getPlacas'}),
       api({action:'getLugares'}).catch(()=>({data:[]}))
     ]);
-    CAT.personal = (pe.data||[]).slice(1).filter(r=>r[0]);
+    CAT.tecnicos = (te.data||[]).slice(1).filter(r=>r[0]);
     CAT.placas   = (pl.data||[]).slice(1).filter(r=>r[0]);
     // Talleres = hoja LUGARES + defaults que no estén ya
     const dbLugares = (lu.data||[]).slice(1).map(r=>String(r[0]).trim()).filter(Boolean);
     const extra = TALLERES_DEFAULT.filter(t=>!dbLugares.includes(t));
     CAT.talleres = [...dbLugares, ...extra];
-    renderCatPersonal(); renderCatUnidades(); renderCatTalleres();
+    renderCatTecnicos(); renderCatUnidades(); renderCatTalleres();
   } catch(e) {
     CAT.placas   = PLACAS_SSI.map(p=>[p.p, p.d, p.t]);
     CAT.talleres = [...TALLERES_DEFAULT];
-    renderCatPersonal(); renderCatUnidades(); renderCatTalleres();
+    renderCatTecnicos(); renderCatUnidades(); renderCatTalleres();
   }
 }
 
 // ── RENDER ──
-function renderCatPersonal() {
-  document.getElementById('cnt-personal').textContent = `${CAT.personal.length} persona(s) registrada(s)`;
-  document.getElementById('tb-personal').innerHTML = CAT.personal.length
-    ? CAT.personal.map(r=>`<tr>
+function renderCatTecnicos() {
+  document.getElementById('cnt-personal').textContent = `${CAT.tecnicos.length} técnico(s) registrado(s)`;
+  document.getElementById('tb-personal').innerHTML = CAT.tecnicos.length
+    ? CAT.tecnicos.map(r=>`<tr>
         <td><strong>${r[0]||''}</strong></td>
         <td>${r[1]||''}</td>
-        <td><button class="del-btn" onclick="catDelPersonal('${escHtml(r[0])}')">✕</button></td>
+        <td><button class="del-btn" onclick="catDelTecnico('${escHtml(r[0])}')">✕</button></td>
       </tr>`).join('')
     : '<tr class="empty-state"><td colspan="3">Sin registros</td></tr>';
-  // Actualizar selects del formulario
-  _fillPersonalLocal();
+  // Actualizar select m-tecnico del formulario
+  S.tecnicos = CAT.tecnicos; _fillTecnicosSel();
 }
+function renderCatPersonal() { renderCatTecnicos(); }
 function renderCatUnidades() {
   document.getElementById('cnt-unidades').textContent = `${CAT.placas.length} unidad(es) registrada(s)`;
   document.getElementById('tb-unidades').innerHTML = CAT.placas.length
@@ -2003,9 +2055,8 @@ function renderCatUnidades() {
         <td><strong>${r[0]||''}</strong></td>
         <td>${r[1]||''}</td>
         <td><span class="badge ${r[2]==='TRACTO'?'b-ok':r[2]==='CARRETA'?'b-proc':'b-pend'}">${r[2]||''}</span></td>
-        <td><button class="del-btn" onclick="catDelPlaca('${escHtml(r[0])}')">✕</button></td>
       </tr>`).join('')
-    : '<tr class="empty-state"><td colspan="4">Sin registros</td></tr>';
+    : '<tr class="empty-state"><td colspan="3">Sin registros (lectura desde BD)</td></tr>';
   // Refrescar dropdown de placas en formularios
   S.placas = CAT.placas; _fillPlacas();
 }
@@ -2026,25 +2077,26 @@ function renderCatTalleres() {
 }
 
 // ── ADD ──
-async function catAddPersonal() {
+async function catAddTecnico() {
   const nombre = document.getElementById('cp-nombre').value.trim().toUpperCase();
   const cargo  = document.getElementById('cp-cargo').value.trim().toUpperCase();
   if (!nombre) { mkAlert('catPersonalAlert','warn','Escribe el nombre'); return; }
-  if (CAT.personal.find(r=>String(r[0]).toUpperCase()===nombre)) {
+  if (CAT.tecnicos.find(r=>String(r[0]).toUpperCase()===nombre)) {
     mkAlert('catPersonalAlert','warn','Ya existe: '+nombre); return;
   }
   if (S.url) {
     try {
-      const r = await post({action:'addPersonal', nombre, cargo});
+      const r = await post({action:'addTecnico', nombre, cargo});
       if (!r.ok) { mkAlert('catPersonalAlert','err', r.error||'Error'); return; }
     } catch(e) { mkAlert('catPersonalAlert','err','Error de conexión'); return; }
   }
-  CAT.personal.push([nombre, cargo]);
+  CAT.tecnicos.push([nombre, cargo]);
   document.getElementById('cp-nombre').value='';
   document.getElementById('cp-cargo').value='';
-  renderCatPersonal();
+  renderCatTecnicos();
   mkAlert('catPersonalAlert','ok',`${nombre} agregado`);
 }
+async function catAddPersonal() { catAddTecnico(); }
 
 async function catAddPlaca() {
   const placa = document.getElementById('cu-placa').value.trim().toUpperCase();
@@ -2087,17 +2139,18 @@ async function catAddLugar() {
 }
 
 // ── DELETE ──
-async function catDelPersonal(nombre) {
+async function catDelTecnico(nombre) {
   if (!confirm(`¿Eliminar "${nombre}"?`)) return;
   if (S.url) {
     try {
-      const r = await post({action:'deletePersonal', nombre});
+      const r = await post({action:'deleteTecnico', nombre});
       if (!r.ok) { mkAlert('catPersonalAlert','err', r.error||'Error'); return; }
     } catch(e) { mkAlert('catPersonalAlert','err','Error de conexión'); return; }
   }
-  CAT.personal = CAT.personal.filter(r=>String(r[0]).toUpperCase()!==nombre.toUpperCase());
-  renderCatPersonal();
+  CAT.tecnicos = CAT.tecnicos.filter(r=>String(r[0]).toUpperCase()!==nombre.toUpperCase());
+  renderCatTecnicos();
 }
+async function catDelPersonal(nombre) { catDelTecnico(nombre); }
 async function catDelPlaca(placa) {
   if (!confirm(`¿Eliminar unidad "${placa}"?`)) return;
   if (S.url) {
@@ -2140,6 +2193,168 @@ function dateYM(val) {
   if(/^\d{4}\/\d{2}/.test(s)) return s.substring(0,4)+'-'+s.substring(5,7);
   if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s.substring(6)+'-'+s.substring(3,5);
   return '';
+}
+
+// ══════════════════════════════════════════
+// CATÁLOGO DE CÓDIGOS DE FALLA
+// ══════════════════════════════════════════
+// BD es el array global — trabajamos sobre él para añadir/quitar entradas custom
+
+function renderCatCodigos() {
+  const q = (document.getElementById('cc-search-inline')?.value||'').toLowerCase();
+  const rows = BD.filter(r => !q ||
+    String(r[0]).includes(q) ||
+    r[1].toLowerCase().includes(q) ||
+    r[2].toLowerCase().includes(q)
+  );
+  const tb = document.getElementById('tb-codigos');
+  if (!tb) return;
+  tb.innerHTML = rows.map(r =>
+    `<tr>
+      <td style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--brand-lo)">${r[0]}</td>
+      <td>${escHtml(r[1])}</td>
+      <td>${escHtml(r[2])}</td>
+      <td><button class="btn-del" onclick="catDelCodigo(${r[0]})" title="Eliminar">✕</button></td>
+    </tr>`
+  ).join('');
+  const cnt = document.getElementById('cnt-codigos');
+  if (cnt) cnt.textContent = `${rows.length} de ${BD.length} entradas`;
+}
+
+function catAddCodigo() {
+  const cod  = parseInt(document.getElementById('cc-cod')?.value||0);
+  const sis  = (document.getElementById('cc-sis')?.value||'').trim().toUpperCase();
+  const comp = (document.getElementById('cc-comp')?.value||'').trim().toUpperCase();
+  if (!cod || !sis || !comp) { mkAlert('catCodigoAlert','warn','Completa Código, Sistema y Componente'); return; }
+  if (BD.find(r=>r[0]===cod)) { mkAlert('catCodigoAlert','warn','Ya existe el código '+cod); return; }
+  BD.push([cod, sis, comp]);
+  BD.sort((a,b)=>a[0]-b[0]);
+  // Actualizar BD_SISTEMAS
+  BD_SISTEMAS.length = 0;
+  [...new Set(BD.map(r=>r[1]))].forEach(s=>BD_SISTEMAS.push(s));
+  document.getElementById('cc-cod').value='';
+  document.getElementById('cc-sis').value='';
+  document.getElementById('cc-comp').value='';
+  mkAlert('catCodigoAlert','ok',`Código ${cod} agregado — recuerda añadirlo también a tu Sheets (hoja CODIGOS)`);
+  renderCatCodigos();
+}
+
+function catDelCodigo(cod) {
+  if (!confirm(`¿Eliminar el código ${cod}?`)) return;
+  const idx = BD.findIndex(r=>r[0]===cod);
+  if (idx>=0) BD.splice(idx,1);
+  BD_SISTEMAS.length = 0;
+  [...new Set(BD.map(r=>r[1]))].forEach(s=>BD_SISTEMAS.push(s));
+  renderCatCodigos();
+}
+
+// Sobreescribir loadCatalogosSection para incluir pestaña códigos
+const _origLoadCat = loadCatalogosSection;
+// catTab ya llama render al activar, pero añadir render al init
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Insertar búsqueda inline encima de la tabla de códigos
+  const tbWrap = document.getElementById('tb-codigos')?.closest('.tbl-wrap');
+  if (tbWrap) {
+    const inp = document.createElement('input');
+    inp.type='text'; inp.id='cc-search-inline';
+    inp.placeholder='Filtrar por código, sistema o componente…';
+    inp.oninput = renderCatCodigos;
+    inp.style.cssText='width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surf-1);color:var(--text-hi);font-size:12px;margin-bottom:8px';
+    tbWrap.parentNode.insertBefore(inp, tbWrap);
+  }
+}, {once:true, capture:false});
+
+// Override catTab to render códigos when that tab is activated
+const _origCatTab = catTab;
+function catTab(el, panelId) {
+  _origCatTab(el, panelId);
+  if (panelId === 'ct-codigos') renderCatCodigos();
+}
+
+// ══════════════════════════════════════════
+// COMPLETAR FORMULARIO DESDE FALLA
+// ══════════════════════════════════════════
+function openFillFromFalla() {
+  const rows = S.fallas.slice(1).filter(r => {
+    const est = String(r[FC.EST]||'').toUpperCase();
+    return est === 'PENDIENTE' || est === 'EN PROCESO' || est === '';
+  });
+  if (!rows.length) {
+    // Mostrar todas si no hay pendientes
+    S._ffRows = S.fallas.slice(1);
+  } else {
+    S._ffRows = rows;
+  }
+  document.getElementById('ff-search').value='';
+  renderFallaPickList();
+  document.getElementById('fillFallaModal').classList.add('show');
+}
+
+function closeFillModal() {
+  document.getElementById('fillFallaModal').classList.remove('show');
+}
+
+function renderFallaPickList() {
+  const q  = (document.getElementById('ff-search')?.value||'').toLowerCase();
+  const src = S._ffRows || S.fallas.slice(1);
+  const rows = q ? src.filter(r =>
+    [r[FC.N],r[FC.P],r[FC.PER],r[FC.SIS],r[FC.CMP],r[FC.DET]].join(' ').toLowerCase().includes(q)
+  ) : src;
+
+  const estColor = {PENDIENTE:'var(--amber)',RESUELTO:'var(--green)','EN PROCESO':'var(--brand-lo)',CRITICO:'var(--red)'};
+  const tb = document.getElementById('ff-list');
+  if (!tb) return;
+  if (!rows.length) { tb.innerHTML='<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--text-lo)">Sin fallas que mostrar</td></tr>'; return; }
+
+  tb.innerHTML = rows.slice(0,50).map(r => {
+    const est = String(r[FC.EST]||'PENDIENTE').toUpperCase();
+    const clr = estColor[est]||'var(--text-lo)';
+    return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="fillMantFromFalla(${JSON.stringify(r).replace(/'/g,'&#39;')})">
+      <td style="padding:8px 10px;font-weight:600">${escHtml(String(r[FC.N]||''))}</td>
+      <td style="padding:8px 10px;font-weight:700;color:var(--brand-lo)">${escHtml(String(r[FC.P]||''))}</td>
+      <td style="padding:8px 10px">${escHtml(String(r[FC.PER]||''))}</td>
+      <td style="padding:8px 10px">${escHtml(String(r[FC.SIS]||''))}</td>
+      <td style="padding:8px 10px"><span style="background:${clr}22;color:${clr};padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700">${est}</span></td>
+      <td style="padding:8px 10px;text-align:center"><button class="btn btn-prim btn-sm">Usar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function fillMantFromFalla(r) {
+  // Pre-rellena el formulario de mantenimiento con datos de la falla
+  const ndocF  = String(r[FC.N]||'');
+  const ndocM  = ndocF.replace(/^RF-/,'MT-'); // RF-2026-001 → MT-2026-001
+  const placa  = String(r[FC.P]  ||'');
+  const km     = String(r[FC.K]  ||'');
+  const pers   = String(r[FC.PER]||'');
+  const sis    = String(r[FC.SIS]||'');
+  const comp   = String(r[FC.CMP]||'');
+  const det    = String(r[FC.DET]||'');
+
+  setVal('m-ndoc', ndocM);
+  if (!get('m-nombre')) setVal('m-nombre', (comp ? comp : det).substring(0,60));
+  setVal('m-placa', placa);
+  setVal('m-km', km);
+  // Intentar seleccionar técnico si coincide con personal registrado
+  const tecSel = document.getElementById('m-tecnico');
+  if (tecSel && pers) {
+    [...tecSel.options].forEach(o=>{
+      if(o.value.toUpperCase().includes(pers.toUpperCase()) || pers.toUpperCase().includes(o.value.toUpperCase()))
+        tecSel.value = o.value;
+    });
+  }
+  // Si hay filas de repuesto, pre-rellenar sistema en la primera
+  const firstSis = document.querySelector('#mRowBody select.mr-sis');
+  if (firstSis && sis) {
+    firstSis.value = sis;
+    firstSis.dispatchEvent(new Event('change'));
+  }
+  closeFillModal();
+  // Navegar a la sección mantenimiento si no está activa
+  const navMant = document.querySelector('.nav-item[onclick*="mantenimiento"]');
+  if (navMant && !document.getElementById('section-mantenimiento')?.classList.contains('active'))
+    navMant.click();
+  mkAlert('mantAlert','ok','Formulario pre-rellenado desde falla '+ndocF+'. Revisa y completa los datos restantes.');
 }
 </script>
 </body>
