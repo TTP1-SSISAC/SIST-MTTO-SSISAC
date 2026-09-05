@@ -683,7 +683,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiazT0VZ9nRsLcu2b-3
 
 // Si dejaste el placeholder de arriba, la app funciona en modo standalone
 // (datos locales de este archivo, sin conectar a Google Sheets).
-const USE_SHEETS = !!SCRIPT_URL && !SCRIPT_URL.includes('https://script.google.com/macros/s/AKfycbyiazT0VZ9nRsLcu2b-36ugQlBsLbufwFzPC_0U71I9Gpg54eOsH-8spDB1zkaPIAtF/exec');
+const USE_SHEETS = !!SCRIPT_URL && SCRIPT_URL.startsWith('https://script.google.com/macros/s/AKfycbyiazT0VZ9nRsLcu2b-36ugQlBsLbufwFzPC_0U71I9Gpg54eOsH-8spDB1zkaPIAtF/exec');
 
 /**
  * Llama a una función del backend de Apps Script vía HTTP (fetch), simulando
