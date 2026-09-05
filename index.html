@@ -227,33 +227,30 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=
   <!-- ══════ DASHBOARD ══════ -->
   <div id="v-dashboard" class="view active">
     <div class="kpi-grid">
-      <div class="kpi bl" data-ic="🚛"><div class="kpi-ic">🚛</div><div class="kpi-v" id="kpi-flota">11</div><div class="kpi-l">Tractos en flota</div><div class="kpi-s" id="kpi-flota-sub" style="color:var(--bl)">9 operativos · 2 en taller</div></div>
-      <div class="kpi rd" data-ic="⚠️"><div class="kpi-ic">⚠️</div><div class="kpi-v" id="kpi-alertas">7</div><div class="kpi-l">Alertas activas</div><<div class="kpi-s" id="kpi-alertas-sub" style="color:var(--rd)">3 críticas · 4 advertencias</div>
-      <div class="kpi yw" data-ic="📦"><div class="kpi-ic">📦</div><div class="kpi-v" id="kpi-stock">12</div><div class="kpi-l">Productos stock bajo</div><div class="kpi-s" style="color:var(--yw)">Requieren reposición</div></div>
-      <div class="kpi gr" data-ic="✅"><div class="kpi-ic">✅</div><div class="kpi-v" id="kpi-mant">105</div><div class="kpi-l">Reparaciones totales</div><div class="kpi-s" style="color:var(--gr)" id="kpi-mant-sub">8 este mes</div></div>
+      <div class="kpi bl" data-ic="🚛"><div class="kpi-ic">🚛</div><div class="kpi-v" id="kpi-flota">—</div><div class="kpi-l">Tractos en flota</div><div class="kpi-s" id="kpi-flota-sub" style="color:var(--bl)">Cargando datos…</div></div>
+      <div class="kpi rd" data-ic="⚠️"><div class="kpi-ic">⚠️</div><div class="kpi-v" id="kpi-alertas">—</div><div class="kpi-l">Alertas activas</div><div class="kpi-s" id="kpi-alertas-sub" style="color:var(--rd)">Cargando datos…</div></div>
+      <div class="kpi yw" data-ic="📦"><div class="kpi-ic">📦</div><div class="kpi-v" id="kpi-stock">—</div><div class="kpi-l">Productos stock bajo</div><div class="kpi-s" style="color:var(--yw)">Requieren reposición</div></div>
+      <div class="kpi gr" data-ic="✅"><div class="kpi-ic">✅</div><div class="kpi-v" id="kpi-mant">—</div><div class="kpi-l">Reparaciones totales</div><div class="kpi-s" style="color:var(--gr)" id="kpi-mant-sub">Cargando datos…</div></div>
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-hd"><span>📄</span><h3>Documentos por Vencer</h3><span class="bdg bdg-rd" id="bdg-docs">3 CRÍTICO</span></div>
+        <div class="card-hd"><span>📄</span><h3>Documentos por Vencer</h3><span class="bdg bdg-rd" id="bdg-docs">— CRÍTICO</span></div>
         <div class="card-bd" id="docs-dash">
+          <div style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Cargando datos de Sheets…</div>
         </div>
     </div>
       <div class="card">
-        <div class="card-hd"><span>🔧</span><h3>Mantenimientos Próximos</h3><span class="bdg bdg-yw" id="bdg-mant-prox">4 PENDIENTES</span></div>
+        <div class="card-hd"><span>🔧</span><h3>Mantenimientos Próximos</h3><span class="bdg bdg-yw" id="bdg-mant-prox">— PENDIENTES</span></div>
         <div class="card-bd" id="mant-dash">
+          <div style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Cargando datos de Sheets…</div>
         </div>
       </div>
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-hd"><span>📦</span><h3>Stock Bajo — Almacén</h3><span class="bdg bdg-rd" id="bdg-stock-bajo">12 ITEMS</span></div>
+        <div class="card-hd"><span>📦</span><h3>Stock Bajo — Almacén</h3><span class="bdg bdg-rd" id="bdg-stock-bajo">— ITEMS</span></div>
         <div class="card-bd" id="stock-dash">
-          <div class="si"><span class="al-dot rd"></span><span class="si-n">Filtro aceite motor</span><span class="si-q low">0 und</span></div>
-          <div class="si"><span class="al-dot rd"></span><span class="si-n">Cámara freno tipo 30</span><span class="si-q low">1 und</span></div>
-          <div class="si"><span class="al-dot rd"></span><span class="si-n">Aceite motor SAE 15W-40</span><span class="si-q low">2 gal</span></div>
-          <div class="si"><span class="al-dot yw"></span><span class="si-n">Correa de alternador</span><span class="si-q wrn">2 und</span></div>
-          <div class="si"><span class="al-dot yw"></span><span class="si-n">Zapata de freno trasera</span><span class="si-q wrn">3 und</span></div>
-          <div class="si"><span class="al-dot yw"></span><span class="si-n">Gas refrigerante R-404A</span><span class="si-q wrn">2 kg</span></div>
+          <div style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Cargando datos de Sheets…</div>
         </div>
       </div>
       <div class="card">
@@ -870,8 +867,24 @@ window.onload=()=>{
     // Cargar datos desde Google Sheets
     _setBusy(true);
     apiCall('getInitialData')
-      .then(r=>{ _setBusy(false); if(r&&r.ok) initFromSheets(r.data); else { console.error('getInitialData error',r); fillProdSelects(); fillFallaSelects(); } })
-      .catch(e=>{ _setBusy(false); console.error('getInitialData fail',e); fillProdSelects(); fillFallaSelects(); });
+      .then(r=>{
+        _setBusy(false);
+        if(r&&r.ok){
+          initFromSheets(r.data);
+        } else {
+          console.error('getInitialData error',r);
+          fillProdSelects(); fillFallaSelects();
+        }
+        // Cargar el dashboard con datos reales de Sheets, sea cual sea el
+        // resultado de getInitialData (el dashboard tiene su propio endpoint).
+        _loadDashboardFromSheets();
+      })
+      .catch(e=>{
+        _setBusy(false);
+        console.error('getInitialData fail',e);
+        fillProdSelects(); fillFallaSelects();
+        _loadDashboardFromSheets();
+      });
   } else {
     // Modo standalone: usar datos estáticos
     fillProdSelects();
@@ -1006,7 +1019,6 @@ function nav(id,el){
   if(el) el.classList.add('active');
   document.getElementById('pg-title').textContent=PG_TITLES[id]||id;
   if(id==='dashboard' && USE_SHEETS) _loadDashboardFromSheets();
-    if(USE_SHEETS) _loadDashboardFromSheets();
   if(id==='ctrl-mant') renderCtrlMant();
   if(id==='kardex'){
     if(USE_SHEETS && !DB._kardexCargado){ DB._kardexCargado=true; _loadKardexFromSheets(); }
@@ -1074,7 +1086,7 @@ function grabarRF(){
   if(USE_SHEETS){
     _setBusy(true);
     apiCall('grabarReporte', {ndoc,fecha,placa,km,personal,fallas})
-      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
       .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión con Sheets:\n'+e.message); });
   }
   alert(`✅ Reporte ${ndoc} grabado. ${fallas.length} falla(s) registrada(s).`);
@@ -1165,8 +1177,6 @@ function grabarMT(){
     }
   });
   DB.mantos.push(rec);
-  document.getElementById('kpi-mant').textContent=105+DB.mantos.length;
-  document.getElementById('kpi-mant-sub').textContent=`${DB.mantos.length} registrado(s) esta sesión`;
   actualizarKxDash();
   if(USE_SHEETS){
     const datos={
@@ -1177,7 +1187,7 @@ function grabarMT(){
     };
     _setBusy(true);
     apiCall('grabarMantenimiento', datos)
-      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
       .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión con Sheets:\n'+e.message); });
   }
   alert(`✅ Mantenimiento ${ndoc} grabado con ${repuestos.length} repuesto(s).`);
@@ -1300,7 +1310,7 @@ function saveEdit(){
   if(USE_SHEETS){
     _setBusy(true);
     apiCall('updateManto', {ndoc:m.ndoc,nombre:m.nombre,tipo:m.tipo,f1:m.f1,h1:m.h1,f2:m.f2,h2:m.h2,dur:m.dur,placa:m.placa,km:m.km,lugar:m.lugar,tecnico:m.tecnico,estado:m.estado,obs:m.obs})
-      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al actualizar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al actualizar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
       .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
   }
 }
@@ -1312,6 +1322,7 @@ function toggleEstado(idx){
   renderCtrlMant();
   if(USE_SHEETS){
     apiCall('updateEstadoManto', {ndoc:m.ndoc, estado:m.estado})
+      .then(()=>_loadDashboardFromSheets())
       .catch(e=>console.error('updateEstadoManto fail',e));
   }
 }
@@ -1406,7 +1417,7 @@ function grabarIngreso(){
     if(itemsSheets.length){
       _setBusy(true);
       apiCall('grabarIngreso', {fecha,ndoc,proveedor:prov,notas,items:itemsSheets})
-        .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+        .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
         .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
     }
   }
@@ -1479,6 +1490,7 @@ function grabarSalida(){
             _setBusy(false);
             if(r&&r.errores&&r.errores.length) alert('⚠️ Sheets rechazó algunas salidas:\n'+r.errores.join('\n'));
             else if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido'));
+            else _loadDashboardFromSheets();
           })
           .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
       }
