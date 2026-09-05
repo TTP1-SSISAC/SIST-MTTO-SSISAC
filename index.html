@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSI — Control de Mantenimiento</title>
+<style>
+:root{
+  --pr:#E8500A;--prd:#B83D07;--prl:#FFF0EB;
+  --sw:224px;--th:54px;
+  --bg:#F5F7FA;--wh:#FFF;--tx:#1E293B;--mu:#64748B;--bo:#E2E8F0;
+  --bl:#3B82F6;--bll:#EFF6FF;
+  --gr:#22C55E;--grl:#F0FDF4;
+  --rd:#EF4444;--rdl:#FEF2F2;
+  --yw:#F59E0B;--ywl:#FFFBEB;
+  --pu:#8B5CF6;--pul:#F5F3FF;
+  --cy:#06B6D4;--cyl:#ECFEFF;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;height:100vh;overflow:hidden;font-size:13.5px}
+
+/* ── SIDEBAR ── */
+.sb{width:var(--sw);background:var(--wh);border-right:1px solid var(--bo);display:flex;flex-direction:column;height:100vh;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.06);flex-shrink:0}
+.sb-logo{padding:13px 14px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:9px}
+.sb-ic{width:36px;height:36px;background:linear-gradient(135deg,var(--pr),var(--prd));border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;box-shadow:0 2px 6px rgba(232,80,10,.35)}
+.sb-txt strong{font-size:12px;color:var(--pr);display:block;font-weight:800}
+.sb-txt span{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em}
+.nv-grp{padding:5px 0}
+.nv-lbl{padding:7px 14px 3px;font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--mu);text-transform:uppercase}
+.nv-it{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 14px;cursor:pointer;color:var(--mu);font-size:12px;border-left:3px solid transparent;transition:all .15s;margin:1px 5px 1px 0;border-radius:0 8px 8px 0}
+.nv-it:hover{background:var(--prl);color:var(--pr);border-left-color:var(--pr)}
+.nv-it.active{background:var(--prl);color:var(--pr);border-left-color:var(--pr);font-weight:700}
+.nv-ic{font-size:14px;width:17px;text-align:center}
+.nv-bd{margin-left:auto;background:var(--rd);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:9px;min-width:16px;text-align:center}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:var(--th);background:var(--wh);border-bottom:1px solid var(--bo);display:flex;align-items:center;justify-content:space-between;padding:0 22px;box-shadow:var(--sh);flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:800}
+.tb-r{display:flex;align-items:center;gap:10px}
+.tb-date{font-size:11px;color:var(--mu)}
+.btn-usr{background:var(--pr);color:#fff;border:none;padding:6px 13px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer}
+.nb{position:relative;width:32px;height:32px;border-radius:7px;border:1.5px solid var(--bo);background:var(--wh);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s}
+.nb:hover{border-color:var(--pr);background:var(--prl)}
+.nb-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--rd);border-radius:50%;border:2px solid white}
+.content{flex:1;overflow-y:auto;padding:20px 22px}
+
+/* ── VIEWS ── */
+.view{display:none}.view.active{display:block}
+.pg-title{font-size:17px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}
+.kpi{background:var(--wh);border-radius:11px;padding:16px;box-shadow:var(--sh);border-top:4px solid;position:relative;overflow:hidden}
+.kpi::after{content:attr(data-ic);position:absolute;right:-4px;bottom:-6px;font-size:48px;opacity:.07}
+.kpi.bl{border-top-color:var(--bl)}.kpi.gr{border-top-color:var(--gr)}.kpi.rd{border-top-color:var(--rd)}.kpi.yw{border-top-color:var(--yw)}.kpi.pu{border-top-color:var(--pu)}
+.kpi-ic{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:9px}
+.kpi.bl .kpi-ic{background:var(--bll)}.kpi.gr .kpi-ic{background:var(--grl)}.kpi.rd .kpi-ic{background:var(--rdl)}.kpi.yw .kpi-ic{background:var(--ywl)}.kpi.pu .kpi-ic{background:var(--pul)}
+.kpi-v{font-size:28px;font-weight:900;line-height:1}.kpi-l{font-size:11px;color:var(--mu);margin-top:3px}
+.kpi-s{font-size:11px;font-weight:700;margin-top:7px}
+.kpi.bl .kpi-s{color:var(--bl)}.kpi.gr .kpi-s{color:var(--gr)}.kpi.rd .kpi-s{color:var(--rd)}.kpi.yw .kpi-s{color:var(--yw)}.kpi.pu .kpi-s{color:var(--pu)}
+
+/* ── CARD ── */
+.card{background:var(--wh);border-radius:11px;box-shadow:var(--sh);overflow:hidden;margin-bottom:15px}
+.card-hd{padding:12px 16px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:7px}
+.card-hd h3{font-size:13px;font-weight:700;flex:1}
+.bdg{font-size:9.5px;padding:2px 8px;border-radius:18px;font-weight:700}
+.bdg-rd{background:var(--rdl);color:var(--rd)}.bdg-yw{background:var(--ywl);color:var(--yw)}.bdg-gr{background:var(--grl);color:var(--gr)}.bdg-bl{background:var(--bll);color:var(--bl)}.bdg-pu{background:var(--pul);color:var(--pu)}
+.card-bd{padding:14px 16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+/* ── ALERT ROWS ── */
+.al{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bo);font-size:12px}
+.al:last-child{border-bottom:none}
+.al-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.al-dot.rd{background:var(--rd)}.al-dot.yw{background:var(--yw)}.al-dot.gr{background:var(--gr)}.al-dot.bl{background:var(--bl)}
+.al-n{flex:1;font-weight:600}.al-i{font-size:11px;color:var(--mu)}
+.al-tg{padding:3px 8px;border-radius:18px;font-size:10px;font-weight:700;white-space:nowrap}
+.al-tg.rd{background:var(--rdl);color:var(--rd)}.al-tg.yw{background:var(--ywl);color:var(--yw)}.al-tg.gr{background:var(--grl);color:var(--gr)}.al-tg.bl{background:var(--bll);color:var(--bl)}
+.mpb{height:4px;background:var(--bo);border-radius:2px;overflow:hidden;margin-top:3px}
+.mpf{height:100%;border-radius:2px}
+.mpf.rd{background:var(--rd)}.mpf.yw{background:var(--yw)}.mpf.bl{background:var(--bl)}.mpf.gr{background:var(--gr)}
+
+/* ── FORM ── */
+.fg{display:grid;gap:12px;margin-bottom:12px}
+.fg1{grid-template-columns:1fr}.fg2{grid-template-columns:1fr 1fr}.fg3{grid-template-columns:1fr 1fr 1fr}.fg4{grid-template-columns:1fr 1fr 1fr 1fr}.fg5{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+label{display:block;font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.fi{width:100%;padding:8px 10px;border:1.5px solid var(--bo);border-radius:7px;font-size:12.5px;color:var(--tx);background:var(--wh);transition:all .15s;outline:none;font-family:inherit}
+.fi:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(232,80,10,.1)}
+.fi:disabled,.fi[readonly]{background:#F8FAFC;color:var(--mu)}
+select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:25px}
+.sec{font-size:10px;font-weight:800;color:var(--pr);text-transform:uppercase;letter-spacing:.1em;padding:9px 0 7px;border-bottom:2px solid var(--prl);margin-bottom:11px}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl thead tr{background:var(--pr)}
+.tbl thead th{padding:8px 10px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.tbl tbody tr{border-bottom:1px solid var(--bo)}
+.tbl tbody tr:hover{background:var(--prl)}
+.tbl tbody td{padding:7px 10px;vertical-align:middle}
+.tbl-wrap{overflow-x:auto}
+.tbl-muted{font-size:11px;color:var(--mu);font-style:italic}
+
+.add-btn{width:100%;padding:8px;background:var(--prl);border:1.5px dashed var(--pr);border-radius:7px;color:var(--pr);font-size:12px;font-weight:700;cursor:pointer;margin-top:7px;transition:all .15s;font-family:inherit}
+.add-btn:hover{background:var(--pr);color:#fff}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 17px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-pr{background:var(--pr);color:#fff}.btn-pr:hover{background:var(--prd)}
+.btn-ol{background:var(--wh);color:var(--mu);border:1.5px solid var(--bo)}.btn-ol:hover{border-color:var(--pr);color:var(--pr)}
+.btn-gr{background:var(--gr);color:#fff}.btn-sm{padding:4px 9px;font-size:11px}
+.btn-ic{width:26px;height:26px;border-radius:5px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+.btn-ic.del{background:var(--rdl);color:var(--rd)}.btn-ic.del:hover{background:var(--rd);color:#fff}
+.btn-ic.edt{background:var(--bll);color:var(--bl)}.btn-ic.edt:hover{background:var(--bl);color:#fff}
+.fa{display:flex;justify-content:flex-end;gap:9px;padding-top:13px;border-top:1px solid var(--bo);margin-top:6px}
+
+/* ── STOCK ── */
+.si{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--bo);font-size:12px}
+.si:last-child{border-bottom:none}.si-n{flex:1}.si-q{font-weight:800;min-width:48px;text-align:right}
+.si-q.low{color:var(--rd)}.si-q.wrn{color:var(--yw)}.si-q.ok{color:var(--gr)}
+
+/* ── MANT CARDS ── */
+.mc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+.mc{background:var(--wh);border-radius:9px;padding:13px;box-shadow:var(--sh);border-left:4px solid}
+.mc.urg{border-left-color:var(--rd)}.mc.wrn{border-left-color:var(--yw)}.mc.ok{border-left-color:var(--gr)}
+.mc-pl{font-size:16px;font-weight:900}.mc-tp{font-size:10px;color:var(--mu);margin-top:1px;text-transform:uppercase}
+.mc-d{margin-top:9px;display:flex;flex-direction:column;gap:4px}
+.mc-r{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mu)}
+.mc-r strong{color:var(--tx);font-weight:700}
+.mc-tg{display:inline-block;margin-top:9px;padding:3px 11px;border-radius:18px;font-size:10.5px;font-weight:700}
+.mc-tg.urg{background:var(--rdl);color:var(--rd)}.mc-tg.wrn{background:var(--ywl);color:var(--yw)}.mc-tg.ok{background:var(--grl);color:var(--gr)}
+
+/* ── SEARCH BAR ── */
+.sb-row{display:flex;gap:9px;margin-bottom:12px;align-items:center}
+.sb-row .fi{flex:1}.sb-row select.fi{flex:0 0 160px}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--wh);border-radius:12px;padding:22px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-hd h3{font-size:15px;font-weight:800}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu)}
+
+/* ── KARDEX TYPE ── */
+.kx-ing{background:var(--grl);color:var(--gr);padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700}
+.kx-sal{background:var(--rdl);color:var(--rd);padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700}
+.kx-mnt{background:var(--ywl);color:var(--yw);padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700}
+
+/* ── CAT GRID ── */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.cc{background:var(--wh);border-radius:9px;padding:12px;box-shadow:var(--sh);border-top:3px solid}
+.cc:nth-child(1){border-top-color:var(--bl)}.cc:nth-child(2){border-top-color:var(--gr)}.cc:nth-child(3){border-top-color:var(--yw)}.cc:nth-child(4){border-top-color:var(--rd)}.cc:nth-child(5){border-top-color:var(--pu)}.cc:nth-child(6){border-top-color:var(--cy)}.cc:nth-child(7){border-top-color:var(--pr)}.cc:nth-child(8){border-top-color:#EC4899}.cc:nth-child(9){border-top-color:#14B8A6}
+.cc-t{font-size:11.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.cc-cnt{font-size:10px;color:var(--mu);padding:1px 6px;background:var(--bg);border-radius:9px}
+.cc-li{font-size:11px;color:var(--mu);line-height:1.85}
+
+/* ── ESTADO BADGES ── */
+.est-btn{padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:inherit;white-space:nowrap}
+.est-ep{background:#DBEAFE;color:#1D4ED8}.est-co{background:#DCFCE7;color:#15803D}
+.est-pe{background:#FEF9C3;color:#A16207}.est-ca{background:#FEE2E2;color:#B91C1C}
+/* ── PLUS BTN ── */
+.plus-btn{padding:7px 11px;border-radius:7px;border:1.5px solid var(--bo);background:var(--wh);color:var(--pr);font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;transition:all .15s;line-height:1}
+.plus-btn:hover{background:var(--pr);color:#fff;border-color:var(--pr)}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sb">
+  <div class="sb-logo">
+    <div class="sb-ic">🚛</div>
+    <div class="sb-txt"><strong>TRANSPORTES SSI S.A.C.</strong><span>Control de Mantenimiento</span></div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Principal</div>
+    <div class="nv-it active" onclick="nav('dashboard',this)"><span class="nv-ic">📊</span>Dashboard</div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Registrar</div>
+    <div class="nv-it" onclick="nav('reporte',this)"><span class="nv-ic">📋</span>Reporte de Fallas<span class="nv-bd" id="bd-rf">3</span></div>
+    <div class="nv-it" onclick="nav('mantenimiento',this)"><span class="nv-ic">🔧</span>Mantenimiento</div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Control</div>
+    <div class="nv-it" onclick="nav('ctrl-fallas',this)"><span class="nv-ic">⚠️</span>Control de Fallas</div>
+    <div class="nv-it" onclick="nav('ctrl-mant',this)"><span class="nv-ic">📅</span>Control de Mantenimientos</div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Almacén</div>
+    <div class="nv-it" onclick="nav('ingresos',this)"><span class="nv-ic">📥</span>Ingresos</div>
+    <div class="nv-it" onclick="nav('salidas',this)"><span class="nv-ic">📤</span>Salidas</div>
+    <div class="nv-it" onclick="nav('kardex',this)"><span class="nv-ic">🗂️</span>KARDEX General</div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Administrar</div>
+    <div class="nv-it" onclick="nav('catalogos',this)"><span class="nv-ic">📦</span>Catálogos</div>
+  </div>
+
+  <div class="nv-grp">
+    <div class="nv-lbl">Sistema</div>
+    <div class="nv-it" onclick="nav('config',this)"><span class="nv-ic">⚙️</span>Configuración</div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="pg-title">Dashboard</h1>
+    <div class="tb-r">
+      <span class="tb-date" id="tb-date"></span>
+      <button class="nb" title="Alertas">🔔<span class="nb-dot"></span></button>
+      <button class="btn-usr">USUARIO</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ══════ DASHBOARD ══════ -->
+  <div id="v-dashboard" class="view active">
+    <div class="kpi-grid">
+      <div class="kpi bl" data-ic="🚛"><div class="kpi-ic">🚛</div><div class="kpi-v">11</div><div class="kpi-l">Tractos en flota</div><div class="kpi-s bl" style="color:var(--bl)">9 operativos · 2 en taller</div></div>
+      <div class="kpi rd" data-ic="⚠️"><div class="kpi-ic">⚠️</div><div class="kpi-v" id="kpi-alertas">7</div><div class="kpi-l">Alertas activas</div><div class="kpi-s" style="color:var(--rd)">3 críticas · 4 advertencias</div></div>
+      <div class="kpi yw" data-ic="📦"><div class="kpi-ic">📦</div><div class="kpi-v" id="kpi-stock">12</div><div class="kpi-l">Productos stock bajo</div><div class="kpi-s" style="color:var(--yw)">Requieren reposición</div></div>
+      <div class="kpi gr" data-ic="✅"><div class="kpi-ic">✅</div><div class="kpi-v" id="kpi-mant">105</div><div class="kpi-l">Reparaciones totales</div><div class="kpi-s" style="color:var(--gr)" id="kpi-mant-sub">8 este mes</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><span>📄</span><h3>Documentos por Vencer</h3><span class="bdg bdg-rd">3 CRÍTICO</span></div>
+        <div class="card-bd">
+          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">A4S-921 — SOAT</div><div class="al-i">Vence: 10/09/2026</div></div><span class="al-tg rd">⛔ 5 días</span></div>
+          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">F7K-348 — Rev. Técnica</div><div class="al-i">Vence: 12/09/2026</div></div><span class="al-tg rd">⛔ 7 días</span></div>
+          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">B2M-105 — MTC</div><div class="al-i">Vence: 25/09/2026</div></div><span class="al-tg yw">⚠️ 20 días</span></div>
+          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">Pedro R. — Licencia A3</div><div class="al-i">Vence: 02/10/2026</div></div><span class="al-tg yw">⚠️ 27 días</span></div>
+          <div class="al"><span class="al-dot gr"></span><div style="flex:1"><div class="al-n">C9L-774 — SOAT</div><div class="al-i">Vence: 15/03/2027</div></div><span class="al-tg gr">✅ 191 días</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span>🔧</span><h3>Mantenimientos Próximos</h3><span class="bdg bdg-yw">4 PENDIENTES</span></div>
+        <div class="card-bd">
+          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">A4S-921 — Cambio aceite motor</div><div class="al-i">KM 125,400 · Próx 125,000</div><div class="mpb"><div class="mpf rd" style="width:100%"></div></div></div><span class="al-tg rd">VENCIDO</span></div>
+          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">F7K-348 — Filtros completos</div><div class="al-i">KM 89,200 · Próx 90,000</div><div class="mpb"><div class="mpf yw" style="width:86%"></div></div></div><span class="al-tg yw">800 KM</span></div>
+          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">B2M-105 — Frenos delanteros</div><div class="al-i">KM 67,800 · Próx 70,000</div><div class="mpb"><div class="mpf yw" style="width:70%"></div></div></div><span class="al-tg yw">2,200 KM</span></div>
+          <div class="al"><span class="al-dot bl"></span><div style="flex:1"><div class="al-n">C9L-774 — Refrig. preventivo</div><div class="al-i">KM 43,100 · Próx 50,000</div><div class="mpb"><div class="mpf bl" style="width:45%"></div></div></div><span class="al-tg bl">6,900 KM</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><span>📦</span><h3>Stock Bajo — Almacén</h3><span class="bdg bdg-rd" id="bdg-stock-bajo">12 ITEMS</span></div>
+        <div class="card-bd" id="stock-dash">
+          <div class="si"><span class="al-dot rd"></span><span class="si-n">Filtro aceite motor</span><span class="si-q low">0 und</span></div>
+          <div class="si"><span class="al-dot rd"></span><span class="si-n">Cámara freno tipo 30</span><span class="si-q low">1 und</span></div>
+          <div class="si"><span class="al-dot rd"></span><span class="si-n">Aceite motor SAE 15W-40</span><span class="si-q low">2 gal</span></div>
+          <div class="si"><span class="al-dot yw"></span><span class="si-n">Correa de alternador</span><span class="si-q wrn">2 und</span></div>
+          <div class="si"><span class="al-dot yw"></span><span class="si-n">Zapata de freno trasera</span><span class="si-q wrn">3 und</span></div>
+          <div class="si"><span class="al-dot yw"></span><span class="si-n">Gas refrigerante R-404A</span><span class="si-q wrn">2 kg</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span>🗂️</span><h3>KARDEX — Últimos Movimientos</h3><span class="bdg bdg-bl" id="bdg-kx-total">0 MOVIM.</span></div>
+        <div class="card-bd" id="kx-dash-list"><div style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Sin movimientos registrados aún</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ REPORTE DE FALLAS ══════ -->
+  <div id="v-reporte" class="view">
+    <div class="pg-title">📋 Reporte de Fallas</div>
+    <div class="card">
+      <div class="card-hd" style="background:linear-gradient(135deg,var(--pr),var(--prd))">
+        <span style="font-size:17px">🚛</span><h3 style="color:#fff;font-size:13px">TRANSPORTES SSI S.A.C. — Nuevo Reporte de Fallas</h3>
+      </div>
+      <div class="card-bd">
+        <div class="sec">📌 Información General</div>
+        <div class="fg fg3">
+          <div><label>Fecha</label><input type="date" class="fi" id="rf-fecha"></div>
+          <div><label>N° de Documento</label><input type="text" class="fi" placeholder="Ej: RF-090" id="rf-ndoc"></div>
+          <div><label>Usuario</label><input type="text" class="fi" value="USUARIO" disabled></div>
+        </div>
+        <div class="fg fg2">
+          <div><label>Placa</label>
+            <select class="fi" id="rf-placa" onchange="autoKm('rf-km',this)">
+              <option value="">— Seleccionar placa —</option>
+              <option>A4S-921</option><option>F7K-348</option><option>B2M-105</option><option>C9L-774</option><option>E1P-430</option><option>G3K-217</option>
+            </select>
+          </div>
+          <div><label>Kilometraje</label><input type="number" class="fi" placeholder="125 000" id="rf-km"></div>
+        </div>
+        <div class="fg fg1">
+          <div><label>Personal que Reporta</label>
+            <select class="fi" id="rf-personal">
+              <option value="">— Seleccionar personal —</option>
+              <option>Pedro Ramírez Huanca — Conductor</option>
+              <option>Luis García Quispe — Mecánico</option>
+              <option>Carlos Flores Mamani — Conductor</option>
+              <option>Jorge Medina Torres — Supervisor</option>
+            </select>
+          </div>
+        </div>
+        <div class="sec">⚠️ Detalle de Fallas</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th style="width:95px">Código</th><th style="width:150px">Sistema</th><th style="width:180px">Componente</th><th>Detalle / Ocurrencia</th><th style="width:36px"></th></tr></thead>
+            <tbody id="rf-body">
+              <tr>
+                <td><select class="fi rf-cod" style="padding:5px 7px;font-size:11px" onchange="fillFalla(this)"><option value="">Seleccionar...</option></select></td>
+                <td><input type="text" class="fi rf-sis" style="padding:5px 7px;font-size:11px" placeholder="Auto..." readonly></td>
+                <td><input type="text" class="fi rf-comp" style="padding:5px 7px;font-size:11px" placeholder="Auto..." readonly></td>
+                <td><input type="text" class="fi rf-det" placeholder="Descripción del problema..." style="padding:5px 7px;font-size:11.5px"></td>
+                <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="addRFRow()">+ AGREGAR FALLA</button>
+        <div class="fa">
+          <button class="btn btn-ol" onclick="clearRF()">Limpiar</button>
+          <button class="btn btn-pr" onclick="grabarRF()">💾 Grabar Reporte</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>📋</span><h3>Reportes Registrados</h3><span class="bdg bdg-rd" id="bdg-rf">0</span></div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap">
+        <table class="tbl"><thead><tr><th>N° Doc</th><th>Fecha</th><th>Placa</th><th>KM</th><th>Sistema</th><th>Componente</th><th>Detalle</th><th>Personal</th><th>Estado</th></tr></thead>
+        <tbody id="rf-hist"><tr><td colspan="9" style="text-align:center;padding:18px;color:var(--mu)">Sin reportes registrados</td></tr></tbody></table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ══════ MANTENIMIENTO ══════ -->
+  <div id="v-mantenimiento" class="view">
+    <div class="pg-title">🔧 Registro de Mantenimiento</div>
+    <div class="card">
+      <div class="card-hd" style="background:linear-gradient(135deg,var(--pr),var(--prd))">
+        <span style="font-size:17px">🚛</span><h3 style="color:#fff;font-size:13px">TRANSPORTES SSI S.A.C. — Registro de Mantenimiento</h3>
+      </div>
+      <div class="card-bd">
+        <!-- Fila 1 -->
+        <div class="fg fg3">
+          <div><label>N° de Documento</label><input type="text" class="fi" placeholder="Ej: MT-001" id="mt-ndoc"></div>
+          <div><label>Nombre de Reparación</label><div style="display:flex;gap:5px"><input type="text" class="fi" list="dl-nombres-rep" placeholder="Ej: Cambio filtro de aceite" id="mt-nombre"><button class="plus-btn" onclick="saveNombreRep()" title="Guardar nombre para reutilizar">+</button></div><datalist id="dl-nombres-rep"></datalist></div>
+          <div><label>Usuario</label><input type="text" class="fi" value="USUARIO" disabled></div>
+        </div>
+        <!-- Fila 2: fechas y horas -->
+        <div class="fg fg5">
+          <div><label>Fecha Inicial</label><input type="date" class="fi" id="mt-f1" onchange="calcDur()"></div>
+          <div><label>Hora Inicial</label><input type="time" class="fi" id="mt-h1" onchange="calcDur()"></div>
+          <div><label>Fecha Final</label><input type="date" class="fi" id="mt-f2" onchange="calcDur()"></div>
+          <div><label>Hora Final</label><input type="time" class="fi" id="mt-h2" onchange="calcDur()"></div>
+          <div><label>Duración</label><input type="text" class="fi" id="mt-dur" placeholder="Auto..." readonly></div>
+        </div>
+        <!-- Fila 3 -->
+        <div class="fg fg4">
+          <div><label>Tipo Mantenimiento</label>
+            <select class="fi" id="mt-tipo">
+              <option value="">Seleccionar...</option>
+              <option>PREVENTIVO</option><option>CORRECTIVO</option><option>PREDICTIVO</option>
+            </select>
+          </div>
+          <div><label>Placa</label>
+            <select class="fi" id="mt-placa" onchange="autoKm('mt-km',this)">
+              <option value="">Seleccionar placa...</option>
+              <option>A4S-921</option><option>F7K-348</option><option>B2M-105</option><option>C9L-774</option><option>E1P-430</option><option>G3K-217</option>
+            </select>
+          </div>
+          <div><label>Kilometraje</label><input type="number" class="fi" placeholder="125 000" id="mt-km"></div>
+          <div><label>Lugar / Taller</label>
+            <select class="fi" id="mt-lugar">
+              <option value="">Seleccionar...</option>
+              <option>Taller Propio SSI</option><option>Taller Ferreyros</option><option>Taller Kenworth Lima</option><option>Taller Volvo SAC</option><option>Taller Externo</option>
+            </select>
+          </div>
+        </div>
+        <!-- Fila 4 -->
+        <div class="fg fg1">
+          <div><label>Técnico Responsable</label>
+            <select class="fi" id="mt-tecnico">
+              <option value="">Seleccionar técnico...</option>
+              <option>Luis García Quispe — Mecánico</option>
+              <option>Marco Soto Reyes — Mecánico</option>
+              <option>Jorge Medina Torres — Supervisor</option>
+              <option>Técnico Externo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sec">🔩 Repuestos y Trabajos Realizados</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th style="width:120px">Sistema</th><th style="width:110px">Método</th><th>Repuesto / Trabajo</th><th style="width:110px">Tipo Costo</th><th style="width:50px">Mon.</th><th style="width:70px">Cantidad</th><th style="width:85px">P. Unitario</th><th style="width:90px">Costo Total</th><th style="width:36px"></th></tr></thead>
+            <tbody id="mt-body">
+              <tr>
+                <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Sistema...</option><option>Motor</option><option>Frenos</option><option>Suspensión</option><option>Eléctrico</option><option>Refrigeración</option><option>Transmisión</option><option>Dirección</option><option>Carrocería</option><option>Mano de Obra</option></select></td>
+                <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Método...</option><option>Correctivo</option><option>Preventivo</option><option>Predictivo</option></select></td>
+                <td><input type="text" class="fi" placeholder="Repuesto / Trabajo" style="padding:4px 6px;font-size:11px" oninput="calcCosto(this)"></td>
+                <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>-</option><option>Repuesto</option><option>Mano de Obra</option><option>Servicio</option></select></td>
+                <td><select class="fi mon-sel" style="padding:4px 5px;font-size:11px;width:54px"><option value="S/">S/</option><option value="$">$</option></select></td>
+                <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="0" min="0" oninput="calcCostoRow(this)"></td>
+                <td><input type="number" class="fi pu-inp" style="padding:4px 6px;font-size:11px" value="0.00" step="0.01" min="0" oninput="calcCostoRow(this)"></td>
+                <td><input type="number" class="fi ct-inp" style="padding:4px 6px;font-size:11px;font-weight:700" value="0.00" readonly></td>
+                <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="addMTRow()">+ AGREGAR REPUESTO / TRABAJO</button>
+
+        <div class="fg fg1" style="margin-top:12px">
+          <div><label>Observaciones</label><textarea class="fi" id="mt-obs" rows="2" placeholder="Observaciones adicionales..."></textarea></div>
+        </div>
+        <div class="fa">
+          <button class="btn btn-ol" onclick="clearMT()">Limpiar</button>
+          <button class="btn btn-pr" onclick="grabarMT()">💾 Grabar Mantenimiento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CONTROL DE FALLAS ══════ -->
+  <div id="v-ctrl-fallas" class="view">
+    <div class="pg-title">⚠️ Control de Fallas</div>
+    <div class="card">
+      <div class="card-hd"><span>📋</span><h3>Historial de Reportes</h3><span class="bdg bdg-rd" id="bdg-cf">0</span></div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap">
+        <table class="tbl"><thead><tr><th>N° Doc</th><th>Fecha</th><th>Placa</th><th>KM</th><th>Sistema</th><th>Componente</th><th>Detalle</th><th>Personal</th><th>Estado</th></tr></thead>
+        <tbody id="cf-body"><tr><td colspan="9" style="text-align:center;padding:18px;color:var(--mu)">Sin reportes aún</td></tr></tbody></table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ══════ CONTROL DE MANTENIMIENTOS ══════ -->
+  <div id="v-ctrl-mant" class="view">
+    <div class="pg-title">📅 Control de Mantenimientos</div>
+    <div class="card">
+      <div class="card-hd">
+        <span>📊</span><h3>Control de Mantenimientos</h3>
+        <span class="bdg bdg-bl" id="bdg-cm">0</span>
+        <button class="btn btn-ol btn-sm" style="margin-left:auto" onclick="renderCtrlMant()">↺ Actualizar</button>
+      </div>
+      <div class="card-bd">
+        <div class="sb-row">
+          <input type="text" class="fi" id="cm-search" placeholder="Buscar placa, técnico, repuesto, nombre..." oninput="renderCtrlMant()">
+          <select class="fi" id="cm-tipo" onchange="renderCtrlMant()" style="flex:0 0 155px">
+            <option value="">Todos los tipos</option>
+            <option>PREVENTIVO</option><option>CORRECTIVO</option><option>PREDICTIVO</option>
+          </select>
+          <select class="fi" id="cm-placa" onchange="renderCtrlMant()" style="flex:0 0 140px">
+            <option value="">Todas las placas</option>
+            <option>A4S-921</option><option>F7K-348</option><option>B2M-105</option><option>C9L-774</option><option>E1P-430</option><option>G3K-217</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>N° Doc</th><th>Nombre Reparación</th><th>F. Inicial</th><th>F. Final</th><th>Tipo</th><th>Placa</th><th>KM</th><th>Técnico</th><th>Lugar</th><th>Sistema</th><th>Repuesto/Trabajo</th><th>Mon.</th><th>Cant.</th><th>P.Unit</th><th>Costo Total</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="cm-body"><tr><td colspan="17" style="text-align:center;padding:18px;color:var(--mu)">Sin resultados</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ INGRESOS ══════ -->
+  <div id="v-ingresos" class="view">
+    <div class="pg-title">📥 Ingresos de Almacén</div>
+    <div class="card">
+      <div class="card-hd" style="background:linear-gradient(135deg,var(--gr),#16A34A)">
+        <span style="font-size:17px">📥</span><h3 style="color:#fff;font-size:13px">Registrar Ingreso de Repuesto/Insumo</h3>
+      </div>
+      <div class="card-bd">
+        <div class="fg fg3">
+          <div><label>Fecha</label><input type="date" class="fi" id="ing-fecha"></div>
+          <div><label>N° Documento / Guía</label><input type="text" class="fi" placeholder="Ej: GR-0045" id="ing-ndoc"></div>
+          <div><label>Proveedor</label><div style="display:flex;gap:5px"><input type="text" class="fi" list="dl-proveedores" placeholder="Nombre del proveedor" id="ing-prov"><button class="plus-btn" onclick="saveProv()" title="Guardar proveedor para reutilizar">+</button></div><datalist id="dl-proveedores"></datalist></div>
+        </div>
+        <div class="sec">📦 Productos Ingresados</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th style="width:130px">ID Producto</th><th>Nombre</th><th style="width:80px">Unidad</th><th style="width:80px">Cantidad</th><th style="width:90px">P. Unitario</th><th style="width:90px">Total S/.</th><th style="width:36px"></th></tr></thead>
+            <tbody id="ing-body">
+              <tr>
+                <td><select class="fi prod-sel" style="padding:4px 6px;font-size:11px" onchange="fillProdName(this)"><option value="">Seleccionar...</option></select></td>
+                <td><input type="text" class="fi prod-nombre" style="padding:4px 6px;font-size:11px" placeholder="Nombre" readonly></td>
+                <td><input type="text" class="fi prod-unidad" style="padding:4px 6px;font-size:11px" placeholder="und" readonly></td>
+                <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="1" min="1" oninput="calcCostoRow(this)"></td>
+                <td><input type="number" class="fi pu-inp" style="padding:4px 6px;font-size:11px" value="0.00" step="0.01" oninput="calcCostoRow(this)"></td>
+                <td><input type="number" class="fi ct-inp" style="padding:4px 6px;font-size:11px;font-weight:700;color:var(--gr)" value="0.00" readonly></td>
+                <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="addIngRow()">+ AGREGAR PRODUCTO</button>
+        <div class="fg fg1" style="margin-top:11px">
+          <div><label>Notas</label><input type="text" class="fi" id="ing-notas" placeholder="Notas adicionales..."></div>
+        </div>
+        <div class="fa">
+          <button class="btn btn-ol" onclick="clearIng()">Limpiar</button>
+          <button class="btn btn-pr" style="background:var(--gr)" onclick="grabarIngreso()">💾 Registrar Ingreso → KARDEX</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>📋</span><h3>Ingresos Registrados</h3><span class="bdg bdg-gr" id="bdg-ing">0</span></div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap">
+        <table class="tbl"><thead><tr><th>ID</th><th>Fecha</th><th>N° Doc</th><th>Proveedor</th><th>ID Producto</th><th>Nombre</th><th>Unidad</th><th>Cantidad</th><th>P.Unit S/.</th><th>Total S/.</th></tr></thead>
+        <tbody id="ing-hist"><tr><td colspan="10" style="text-align:center;padding:18px;color:var(--mu)">Sin ingresos registrados</td></tr></tbody></table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ══════ SALIDAS ══════ -->
+  <div id="v-salidas" class="view">
+    <div class="pg-title">📤 Salidas de Almacén</div>
+    <div class="card">
+      <div class="card-hd" style="background:linear-gradient(135deg,var(--rd),#B91C1C)">
+        <span style="font-size:17px">📤</span><h3 style="color:#fff;font-size:13px">Registrar Salida de Repuesto/Insumo</h3>
+      </div>
+      <div class="card-bd">
+        <div class="fg fg3">
+          <div><label>Fecha</label><input type="date" class="fi" id="sal-fecha"></div>
+          <div><label>N° Documento / Orden</label><input type="text" class="fi" placeholder="Ej: SAL-001" id="sal-ndoc"></div>
+          <div><label>Destino / Placa</label>
+            <select class="fi" id="sal-dest">
+              <option value="">Seleccionar destino...</option>
+              <option>A4S-921 — Mantenimiento</option><option>F7K-348 — Mantenimiento</option>
+              <option>B2M-105 — Mantenimiento</option><option>C9L-774 — Mantenimiento</option>
+              <option>E1P-430 — Mantenimiento</option><option>G3K-217 — Mantenimiento</option>
+              <option>Otro / Consumo general</option>
+            </select>
+          </div>
+        </div>
+        <div class="sec">📦 Productos Salientes</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th style="width:130px">ID Producto</th><th>Nombre</th><th style="width:80px">Stock Act.</th><th style="width:80px">Cantidad</th><th style="width:36px"></th></tr></thead>
+            <tbody id="sal-body">
+              <tr>
+                <td><select class="fi prod-sel" style="padding:4px 6px;font-size:11px" onchange="fillProdSal(this)"><option value="">Seleccionar...</option></select></td>
+                <td><input type="text" class="fi prod-nombre" style="padding:4px 6px;font-size:11px" placeholder="Nombre" readonly></td>
+                <td><input type="text" class="fi prod-stock" style="padding:4px 6px;font-size:11px;text-align:center" placeholder="-" readonly></td>
+                <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="1" min="1"></td>
+                <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="add-btn" onclick="addSalRow()">+ AGREGAR PRODUCTO</button>
+        <div class="fg fg1" style="margin-top:11px">
+          <div><label>Notas</label><input type="text" class="fi" id="sal-notas" placeholder="Notas adicionales..."></div>
+        </div>
+        <div class="fa">
+          <button class="btn btn-ol" onclick="clearSal()">Limpiar</button>
+          <button class="btn btn-pr" style="background:var(--rd)" onclick="grabarSalida()">💾 Registrar Salida → KARDEX</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>📋</span><h3>Salidas Registradas</h3><span class="bdg bdg-rd" id="bdg-sal">0</span></div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap">
+        <table class="tbl"><thead><tr><th>ID</th><th>Fecha</th><th>N° Doc</th><th>Destino</th><th>ID Producto</th><th>Nombre</th><th>Cantidad</th></tr></thead>
+        <tbody id="sal-hist"><tr><td colspan="7" style="text-align:center;padding:18px;color:var(--mu)">Sin salidas registradas</td></tr></tbody></table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ══════ KARDEX GENERAL ══════ -->
+  <div id="v-kardex" class="view">
+    <div class="pg-title">🗂️ KARDEX General</div>
+    <div class="card">
+      <div class="card-hd">
+        <span>🗂️</span><h3>Todos los Movimientos de Almacén</h3>
+        <span class="bdg bdg-bl" id="bdg-kx">0 movim.</span>
+        <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
+          <input type="text" class="fi btn-sm" id="kx-search" placeholder="Buscar producto, tipo..." oninput="renderKardex()" style="width:200px">
+          <select class="fi btn-sm" id="kx-tipo" onchange="renderKardex()" style="width:130px">
+            <option value="">Todos</option><option>INGRESO</option><option>SALIDA</option><option>MANTENIMIENTO</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>ID</th><th>Fecha</th><th>Tipo</th><th>ID Producto</th><th>Nombre</th><th>Cantidad</th><th>Ref. Documento</th><th>Notas</th></tr></thead>
+          <tbody id="kx-body"><tr><td colspan="8" style="text-align:center;padding:18px;color:var(--mu)">Sin movimientos en KARDEX</td></tr></tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ══════ CATÁLOGOS ══════ -->
+  <div id="v-catalogos" class="view">
+    <div class="pg-title">📦 Catálogos — 89 Productos</div>
+    <div class="cat-grid">
+      <div class="cc"><div class="cc-t">🔵 FILTROS <span class="cc-cnt">12</span></div><div class="cc-li">Filtro aceite motor tracto<br>Filtro aire primario tracto<br>Filtro aire secundario tracto<br>Filtro combustible primario<br>Filtro combustible secundario<br>Filtro hidráulico dirección<br>Filtro separador de agua<br>Filtro aceite unid. refrig.<br>Filtro combustible unid. refrig.<br>Filtro aire unid. refrig.<br>Filtro transmisión automática<br>Filtro de cabina</div></div>
+      <div class="cc"><div class="cc-t">🟢 LUBRICANTES Y FLUIDOS <span class="cc-cnt">10</span></div><div class="cc-li">Aceite motor SAE 15W-40 (gal)<br>Aceite transmisión SAE 80W-90<br>Aceite diferencial SAE 80W-140<br>Aceite hidráulico ISO 46<br>Aceite compresor refrigeración<br>Grasa multipropósito (kg)<br>Refrigerante/anticongelante (lt)<br>Líquido de frenos DOT 4<br>Gas refrigerante R-404A (kg)<br>Gas refrigerante R-134a (kg)</div></div>
+      <div class="cc"><div class="cc-t">🟡 FRENOS <span class="cc-cnt">8</span></div><div class="cc-li">Zapata de freno delantera<br>Zapata de freno trasera<br>Cámara de freno tipo 20<br>Cámara de freno tipo 24<br>Cámara de freno tipo 30<br>Slack adjuster automático<br>Manguera de aire de frenos<br>Relay valve de frenos</div></div>
+      <div class="cc"><div class="cc-t">🔴 MOTOR Y TRANSMISIÓN <span class="cc-cnt">10</span></div><div class="cc-li">Correa de alternador<br>Correa de ventilador<br>Manguera radiador superior<br>Manguera radiador inferior<br>Tapa de radiador<br>Empaque de culata<br>Termostato<br>Bomba de agua<br>Turbocompresor remanufact.<br>Inyector de combustible</div></div>
+      <div class="cc"><div class="cc-t">🟣 SUSPENSIÓN Y DIRECCIÓN <span class="cc-cnt">8</span></div><div class="cc-li">Bocina de muelle delantera<br>Bocina de muelle trasera<br>Perno U de muelle<br>Perno king pin<br>Bocina king pin<br>Rótula de dirección<br>Extremo barra de dirección<br>Amortiguador delantero</div></div>
+      <div class="cc"><div class="cc-t">🩵 ELÉCTRICO <span class="cc-cnt">10</span></div><div class="cc-li">Batería 12V 150Ah<br>Alternador 24V<br>Motor de arranque<br>Faro delantero LED<br>Faro neblinero<br>Luz posterior LED<br>Kit fusibles automotrices<br>Relay universal 12/24V<br>Cable eléctrico automotriz (m)<br>Terminal de batería (par)</div></div>
+      <div class="cc"><div class="cc-t">🟠 LLANTAS <span class="cc-cnt">5</span></div><div class="cc-li">Llanta 295/80R22.5 tracto<br>Llanta 11R22.5 carreta<br>Aro de llanta 22.5"<br>Válvula de llanta<br>Kit parche para llanta</div></div>
+      <div class="cc"><div class="cc-t">🩷 REFRIGERACIÓN <span class="cc-cnt">7</span></div><div class="cc-li">Correa unidad refrigeración<br>Válvula solenoide refrig.<br>Sensor temperatura -30/+30°C<br>Evaporador (repuesto)<br>Condensador (repuesto)<br>Compresor refrig. remanuf.<br>Batería unidad refrigeración</div></div>
+      <div class="cc"><div class="cc-t">🩵 SEGURIDAD, EPP Y CONSUMIBLES <span class="cc-cnt">19</span></div><div class="cc-li">Extintor PQS 6kg · Triángulo emergencia · Botiquín · Casco · Chaleco reflectivo · Guantes nitrilo · Zapatos seguridad · Lentes · Tapones auditivos · Gata 50T · Llave de ruedas · Cadena arrastre · Linterna LED · Cinta aislante · Trapo industrial · Thinner · Limpiador frenos · Silicona selladora · Precinto contenedor</div></div>
+    </div>
+  </div>
+
+  <!-- ══════ CONFIGURACIÓN ══════ -->
+  <div id="v-config" class="view">
+    <div class="pg-title">⚙️ Configuración</div>
+    <div class="two-col">
+      <div class="card"><div class="card-hd"><span>🔔</span><h3>Alertas de Documentos</h3></div><div class="card-bd">
+        <div class="fg fg1">
+          <div><label>Días anticipación — alerta roja</label><input type="number" class="fi" value="10"></div>
+          <div><label>Días anticipación — alerta amarilla</label><input type="number" class="fi" value="30"></div>
+          <div><label>Email para notificaciones</label><input type="email" class="fi" placeholder="correo@empresa.com"></div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-hd"><span>🔧</span><h3>Alertas de Mantenimiento</h3></div><div class="card-bd">
+        <div class="fg fg1">
+          <div><label>KM anticipación — alerta roja</label><input type="number" class="fi" value="500"></div>
+          <div><label>KM anticipación — alerta amarilla</label><input type="number" class="fi" value="2000"></div>
+          <div><label>Intervalo de mantenimiento (KM)</label><input type="number" class="fi" value="5000"></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="fa" style="border-top:none;margin-top:0"><button class="btn btn-pr">💾 Guardar Configuración</button></div>
+  </div>
+
+  </div><!-- /.content -->
+</div><!-- /.main -->
+
+<!-- ══════ MODAL EDITAR MANTENIMIENTO ══════ -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal" style="width:700px">
+    <div class="modal-hd"><h3>✏️ Editar Registro de Mantenimiento</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="sec">📌 Identificación</div>
+    <div class="fg fg3">
+      <div><label>N° Documento</label><input type="text" class="fi" id="me-ndoc"></div>
+      <div><label>Nombre de Reparación</label><input type="text" class="fi" id="me-nombre"></div>
+      <div><label>Tipo</label><select class="fi" id="me-tipo"><option value="">Seleccionar...</option><option>PREVENTIVO</option><option>CORRECTIVO</option><option>PREDICTIVO</option></select></div>
+    </div>
+    <div class="sec">📅 Fechas y Horas</div>
+    <div class="fg fg5">
+      <div><label>Fecha Inicial</label><input type="date" class="fi" id="me-f1" onchange="calcDurEdit()"></div>
+      <div><label>Hora Inicial</label><input type="time" class="fi" id="me-h1" onchange="calcDurEdit()"></div>
+      <div><label>Fecha Final</label><input type="date" class="fi" id="me-f2" onchange="calcDurEdit()"></div>
+      <div><label>Hora Final</label><input type="time" class="fi" id="me-h2" onchange="calcDurEdit()"></div>
+      <div><label>Duración</label><input type="text" class="fi" id="me-dur" readonly placeholder="Auto..."></div>
+    </div>
+    <div class="sec">🔧 Datos del Mantenimiento</div>
+    <div class="fg fg4">
+      <div><label>Placa</label><select class="fi" id="me-placa"><option value="">Seleccionar...</option><option>A4S-921</option><option>F7K-348</option><option>B2M-105</option><option>C9L-774</option><option>E1P-430</option><option>G3K-217</option></select></div>
+      <div><label>Kilometraje</label><input type="number" class="fi" id="me-km" placeholder="125 000"></div>
+      <div><label>Lugar / Taller</label><select class="fi" id="me-lugar"><option value="">Seleccionar...</option><option>Taller Propio SSI</option><option>Taller Ferreyros</option><option>Taller Kenworth Lima</option><option>Taller Volvo SAC</option><option>Taller Externo</option></select></div>
+      <div><label>Técnico</label><select class="fi" id="me-tecnico"><option value="">Seleccionar...</option><option>Luis García Quispe — Mecánico</option><option>Marco Soto Reyes — Mecánico</option><option>Jorge Medina Torres — Supervisor</option><option>Técnico Externo</option></select></div>
+    </div>
+    <div class="fg fg2">
+      <div><label>Estado</label><select class="fi" id="me-estado"><option>EN PROCESO</option><option>COMPLETADO</option><option>PENDIENTE</option><option>CANCELADO</option></select></div>
+      <div><label>Observaciones</label><textarea class="fi" id="me-obs" rows="1"></textarea></div>
+    </div>
+    <input type="hidden" id="me-idx">
+    <div class="fa">
+      <button class="btn btn-ol" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-pr" onclick="saveEdit()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ MODO: SHEETS vs STANDALONE ═══
+// Pega aquí la URL de tu Web App de Apps Script (Implementar → Nueva
+// implementación → Aplicación web). Debe terminar en /exec.
+// Ejemplo: 'https://script.google.com/macros/s/AKfycb.../exec'
+const SCRIPT_URL = 'PEGA_AQUI_TU_URL_DE_WEB_APP/exec';
+
+// Si dejaste el placeholder de arriba, la app funciona en modo standalone
+// (datos locales de este archivo, sin conectar a Google Sheets).
+const USE_SHEETS = !!SCRIPT_URL && !SCRIPT_URL.includes('PEGA_AQUI_TU_URL');
+
+/**
+ * Llama a una función del backend de Apps Script vía HTTP (fetch), simulando
+ * la misma interfaz que google.script.run pero funcionando desde cualquier
+ * dominio externo (como GitHub Pages). Usa Content-Type "text/plain" a
+ * propósito: así el navegador NO envía una petición OPTIONS de preflight
+ * (que Apps Script no sabe responder), evitando errores de CORS.
+ */
+async function apiCall(action, payload) {
+  const resp = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, payload: payload || {} }),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status + ' al llamar ' + action);
+  return await resp.json();
+}
+
+// ═══ DATA STORE ═══
+const DB = {
+  kardex: [],         // {id,fecha,tipo,idProd,nombre,cantidad,ref,notas}
+  ingresos: [],       // {id,fecha,ndoc,proveedor,idProd,nombre,unidad,cantidad,pu,total}
+  salidas: [],        // {id,fecha,ndoc,destino,idProd,nombre,cantidad}
+  mantos: [],         // full mant records
+  reportes: [],       // fault reports
+  stock: {},          // {idProd: cantidad_actual}
+  proveedores: [],    // lista guardada de proveedores
+  nombresRep: [],     // lista guardada de nombres de reparación
+};
+
+// KM_MAP: valores estáticos para modo standalone
+const KM_MAP = {'A4S-921':125400,'F7K-348':89200,'B2M-105':67800,'C9L-774':43100,'E1P-430':110200,'G3K-217':198600};
+
+// ═══ CATÁLOGO FALLAS ═══
+const BD_FALLAS = [
+  {cod:'M-001',sis:'Motor',comp:'Filtro de aceite'},
+  {cod:'M-002',sis:'Motor',comp:'Culata / Empaque'},
+  {cod:'M-003',sis:'Motor',comp:'Turbocompresor'},
+  {cod:'M-004',sis:'Motor',comp:'Bomba de agua'},
+  {cod:'M-005',sis:'Motor',comp:'Termostato'},
+  {cod:'M-006',sis:'Motor',comp:'Manguera de radiador'},
+  {cod:'M-007',sis:'Motor',comp:'Inyector de combustible'},
+  {cod:'M-008',sis:'Motor',comp:'Correa de alternador'},
+  {cod:'M-009',sis:'Motor',comp:'Correa de ventilador'},
+  {cod:'M-010',sis:'Motor',comp:'Filtro de combustible'},
+  {cod:'T-001',sis:'Transmisión',comp:'Caja de cambios'},
+  {cod:'T-002',sis:'Transmisión',comp:'Embrague'},
+  {cod:'T-003',sis:'Transmisión',comp:'Diferencial'},
+  {cod:'T-004',sis:'Transmisión',comp:'Filtro de transmisión'},
+  {cod:'FR-001',sis:'Frenos',comp:'Zapata delantera'},
+  {cod:'FR-002',sis:'Frenos',comp:'Zapata trasera'},
+  {cod:'FR-003',sis:'Frenos',comp:'Cámara tipo 20'},
+  {cod:'FR-004',sis:'Frenos',comp:'Cámara tipo 24'},
+  {cod:'FR-005',sis:'Frenos',comp:'Cámara tipo 30'},
+  {cod:'FR-006',sis:'Frenos',comp:'Slack adjuster'},
+  {cod:'FR-007',sis:'Frenos',comp:'Relay valve'},
+  {cod:'S-001',sis:'Suspensión',comp:'Bocina de muelle'},
+  {cod:'S-002',sis:'Suspensión',comp:'Perno U de muelle'},
+  {cod:'S-003',sis:'Suspensión',comp:'Perno king pin'},
+  {cod:'S-004',sis:'Suspensión',comp:'Bocina king pin'},
+  {cod:'S-005',sis:'Suspensión',comp:'Amortiguador delantero'},
+  {cod:'D-001',sis:'Dirección',comp:'Rótula de dirección'},
+  {cod:'D-002',sis:'Dirección',comp:'Extremo barra de dirección'},
+  {cod:'D-003',sis:'Dirección',comp:'Filtro hidráulico'},
+  {cod:'E-001',sis:'Eléctrico',comp:'Batería 12V 150Ah'},
+  {cod:'E-002',sis:'Eléctrico',comp:'Alternador 24V'},
+  {cod:'E-003',sis:'Eléctrico',comp:'Motor de arranque'},
+  {cod:'E-004',sis:'Eléctrico',comp:'Faro delantero LED'},
+  {cod:'E-005',sis:'Eléctrico',comp:'Luz posterior LED'},
+  {cod:'E-006',sis:'Eléctrico',comp:'Relay / Fusible'},
+  {cod:'R-001',sis:'Refrigeración',comp:'Compresor'},
+  {cod:'R-002',sis:'Refrigeración',comp:'Condensador'},
+  {cod:'R-003',sis:'Refrigeración',comp:'Evaporador'},
+  {cod:'R-004',sis:'Refrigeración',comp:'Válvula solenoide'},
+  {cod:'R-005',sis:'Refrigeración',comp:'Sensor temperatura'},
+  {cod:'R-006',sis:'Refrigeración',comp:'Correa unidad refrig.'},
+  {cod:'R-007',sis:'Refrigeración',comp:'Batería unidad refrig.'},
+  {cod:'R-008',sis:'Refrigeración',comp:'Gas refrigerante'},
+  {cod:'C-001',sis:'Carrocería',comp:'Chasis / Estructura'},
+  {cod:'C-002',sis:'Carrocería',comp:'Puerta / Acceso'},
+  {cod:'L-001',sis:'Llantas',comp:'Llanta delantera'},
+  {cod:'L-002',sis:'Llantas',comp:'Llanta trasera'},
+  {cod:'L-003',sis:'Llantas',comp:'Aro / Válvula'},
+];
+
+// 89 productos simplificados para selects
+const PRODS = [
+  {id:'PROD-001',n:'Filtro aceite motor tracto',u:'und'},
+  {id:'PROD-002',n:'Filtro aire primario tracto',u:'und'},
+  {id:'PROD-003',n:'Filtro aire secundario tracto',u:'und'},
+  {id:'PROD-004',n:'Filtro combustible primario',u:'und'},
+  {id:'PROD-005',n:'Filtro combustible secundario',u:'und'},
+  {id:'PROD-006',n:'Filtro hidráulico dirección',u:'und'},
+  {id:'PROD-007',n:'Filtro separador de agua',u:'und'},
+  {id:'PROD-008',n:'Filtro aceite unid. refrig.',u:'und'},
+  {id:'PROD-009',n:'Filtro combustible unid. refrig.',u:'und'},
+  {id:'PROD-010',n:'Filtro aire unid. refrig.',u:'und'},
+  {id:'PROD-011',n:'Filtro transmisión automática',u:'und'},
+  {id:'PROD-012',n:'Filtro de cabina',u:'und'},
+  {id:'PROD-013',n:'Aceite motor SAE 15W-40',u:'galón'},
+  {id:'PROD-014',n:'Aceite transmisión SAE 80W-90',u:'galón'},
+  {id:'PROD-015',n:'Aceite diferencial SAE 80W-140',u:'galón'},
+  {id:'PROD-016',n:'Aceite hidráulico ISO 46',u:'galón'},
+  {id:'PROD-017',n:'Aceite compresor refrigeración',u:'litro'},
+  {id:'PROD-018',n:'Grasa multipropósito',u:'kg'},
+  {id:'PROD-019',n:'Refrigerante/anticongelante',u:'litro'},
+  {id:'PROD-020',n:'Líquido de frenos DOT 4',u:'litro'},
+  {id:'PROD-021',n:'Gas refrigerante R-404A',u:'kg'},
+  {id:'PROD-022',n:'Gas refrigerante R-134a',u:'kg'},
+  {id:'PROD-023',n:'Zapata de freno delantera',u:'und'},
+  {id:'PROD-024',n:'Zapata de freno trasera',u:'und'},
+  {id:'PROD-025',n:'Cámara de freno tipo 20',u:'und'},
+  {id:'PROD-026',n:'Cámara de freno tipo 24',u:'und'},
+  {id:'PROD-027',n:'Cámara de freno tipo 30',u:'und'},
+  {id:'PROD-028',n:'Slack adjuster automático',u:'und'},
+  {id:'PROD-029',n:'Manguera de aire de frenos',u:'m'},
+  {id:'PROD-030',n:'Relay valve de frenos',u:'und'},
+  {id:'PROD-031',n:'Correa de alternador',u:'und'},
+  {id:'PROD-032',n:'Correa de ventilador',u:'und'},
+  {id:'PROD-033',n:'Manguera radiador superior',u:'und'},
+  {id:'PROD-034',n:'Manguera radiador inferior',u:'und'},
+  {id:'PROD-035',n:'Tapa de radiador',u:'und'},
+  {id:'PROD-036',n:'Empaque de culata',u:'und'},
+  {id:'PROD-037',n:'Termostato',u:'und'},
+  {id:'PROD-038',n:'Bomba de agua',u:'und'},
+  {id:'PROD-039',n:'Turbocompresor remanufact.',u:'und'},
+  {id:'PROD-040',n:'Inyector de combustible',u:'und'},
+  {id:'PROD-041',n:'Bocina muelle delantera',u:'und'},
+  {id:'PROD-042',n:'Bocina muelle trasera',u:'und'},
+  {id:'PROD-043',n:'Perno U de muelle',u:'und'},
+  {id:'PROD-044',n:'Perno king pin',u:'und'},
+  {id:'PROD-045',n:'Bocina king pin',u:'und'},
+  {id:'PROD-046',n:'Rótula de dirección',u:'und'},
+  {id:'PROD-047',n:'Extremo barra de dirección',u:'und'},
+  {id:'PROD-048',n:'Amortiguador delantero',u:'und'},
+  {id:'PROD-049',n:'Batería 12V 150Ah',u:'und'},
+  {id:'PROD-050',n:'Alternador 24V',u:'und'},
+  {id:'PROD-051',n:'Motor de arranque',u:'und'},
+  {id:'PROD-052',n:'Faro delantero LED',u:'und'},
+  {id:'PROD-053',n:'Faro neblinero',u:'und'},
+  {id:'PROD-054',n:'Luz posterior LED',u:'und'},
+  {id:'PROD-055',n:'Kit fusibles automotrices',u:'kit'},
+  {id:'PROD-056',n:'Relay universal 12/24V',u:'und'},
+  {id:'PROD-057',n:'Cable eléctrico automotriz',u:'m'},
+  {id:'PROD-058',n:'Terminal de batería (par)',u:'par'},
+  {id:'PROD-059',n:'Llanta 295/80R22.5 tracto',u:'und'},
+  {id:'PROD-060',n:'Llanta 11R22.5 carreta',u:'und'},
+  {id:'PROD-061',n:'Aro de llanta 22.5"',u:'und'},
+  {id:'PROD-062',n:'Válvula de llanta',u:'und'},
+  {id:'PROD-063',n:'Kit parche para llanta',u:'kit'},
+  {id:'PROD-064',n:'Correa unidad refrigeración',u:'und'},
+  {id:'PROD-065',n:'Válvula solenoide refrig.',u:'und'},
+  {id:'PROD-066',n:'Sensor temperatura -30/+30°C',u:'und'},
+  {id:'PROD-067',n:'Evaporador (repuesto)',u:'und'},
+  {id:'PROD-068',n:'Condensador (repuesto)',u:'und'},
+  {id:'PROD-069',n:'Compresor refrig. remanuf.',u:'und'},
+  {id:'PROD-070',n:'Batería unidad refrigeración',u:'und'},
+  {id:'PROD-071',n:'Extintor PQS 6kg',u:'und'},
+  {id:'PROD-072',n:'Triángulo de emergencia',u:'und'},
+  {id:'PROD-073',n:'Botiquín primeros auxilios',u:'kit'},
+  {id:'PROD-074',n:'Casco de seguridad',u:'und'},
+  {id:'PROD-075',n:'Chaleco reflectivo',u:'und'},
+  {id:'PROD-076',n:'Guantes de nitrilo',u:'par'},
+  {id:'PROD-077',n:'Zapatos de seguridad',u:'par'},
+  {id:'PROD-078',n:'Lentes de seguridad',u:'und'},
+  {id:'PROD-079',n:'Tapones auditivos',u:'par'},
+  {id:'PROD-080',n:'Gata hidráulica 50T',u:'und'},
+  {id:'PROD-081',n:'Llave de ruedas',u:'und'},
+  {id:'PROD-082',n:'Cadena de arrastre',u:'und'},
+  {id:'PROD-083',n:'Linterna LED',u:'und'},
+  {id:'PROD-084',n:'Cinta aislante',u:'und'},
+  {id:'PROD-085',n:'Trapo industrial',u:'kg'},
+  {id:'PROD-086',n:'Thinner',u:'litro'},
+  {id:'PROD-087',n:'Limpiador de frenos (spray)',u:'und'},
+  {id:'PROD-088',n:'Silicona selladora',u:'und'},
+  {id:'PROD-089',n:'Precinto seguridad contenedor',u:'und'},
+];
+
+// counters
+let cnt = {MT:0,ING:0,SAL:0,KDX:0,RF:0};
+function nextId(pfx){ cnt[pfx]++; return `${pfx}-${String(cnt[pfx]).padStart(3,'0')}`; }
+function fmtDate(){ return new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+
+// ═══ INIT ═══
+window.onload=()=>{
+  // fecha actual
+  const d=new Date();
+  document.getElementById('tb-date').textContent=d.toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  const iso=d.toISOString().split('T')[0];
+  ['rf-fecha','mt-f1','mt-f2','ing-fecha','sal-fecha'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=iso; });
+
+  if(USE_SHEETS){
+    // Cargar datos desde Google Sheets
+    _setBusy(true);
+    apiCall('getInitialData')
+      .then(r=>{ _setBusy(false); if(r&&r.ok) initFromSheets(r.data); else { console.error('getInitialData error',r); fillProdSelects(); fillFallaSelects(); } })
+      .catch(e=>{ _setBusy(false); console.error('getInitialData fail',e); fillProdSelects(); fillFallaSelects(); });
+  } else {
+    // Modo standalone: usar datos estáticos
+    fillProdSelects();
+    fillFallaSelects();
+  }
+};
+
+// ─── Busy overlay helper ─────────────────────────────────────────────────────
+function _setBusy(on){
+  let el=document.getElementById('__busy');
+  if(on){
+    if(!el){
+      el=document.createElement('div'); el.id='__busy';
+      el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;display:flex;align-items:center;justify-content:center';
+      el.innerHTML='<div style="background:#fff;padding:22px 36px;border-radius:12px;font-size:14px;color:#1a3a5c;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.18)">⏳ Cargando datos...</div>';
+      document.body.appendChild(el);
+    }
+  } else { if(el) el.remove(); }
+}
+
+// ─── Inicializar con datos de Sheets ─────────────────────────────────────────
+function initFromSheets(data){
+  // 1. Placas
+  if(data.placas&&data.placas.length){
+    ['rf-placa','mt-placa','cm-placa'].forEach(id=>{
+      const sel=document.getElementById(id);
+      if(!sel) return;
+      sel.innerHTML='<option value="">Seleccionar placa...</option>'+
+        data.placas.map(p=>`<option value="${p.placa}">${p.placa} (${p.tipo})</option>`).join('');
+    });
+    // modal editar
+    const meSel=document.getElementById('me-placa');
+    if(meSel) meSel.innerHTML='<option value="">Seleccionar placa...</option>'+
+      data.placas.map(p=>`<option value="${p.placa}">${p.placa}</option>`).join('');
+  }
+  // 2. Conductores + personal (para reporte fallas)
+  if(data.conductores&&data.conductores.length){
+    const sel=document.getElementById('rf-personal');
+    if(sel) sel.innerHTML='<option value="">Seleccionar personal...</option>'+
+      data.conductores.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+  // 3. Técnicos
+  if(data.tecnicos&&data.tecnicos.length){
+    const sels=[document.getElementById('mt-tecnico'),document.getElementById('me-tecnico')];
+    sels.forEach(s=>{ if(!s) return; s.innerHTML='<option value="">Seleccionar técnico...</option>'+data.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join(''); });
+  }
+  // 4. Productos → reemplaza PRODS
+  if(data.productos&&data.productos.length){
+    PRODS.length=0;
+    data.productos.forEach(p=>{ PRODS.push({id:p.id,n:p.n,u:p.u,pu:p.pu}); DB.stock[p.id]=p.stock||0; });
+    fillProdSelects();
+  }
+  // 5. Catálogo de fallas → reemplaza BD_FALLAS
+  if(data.fallas&&data.fallas.length){
+    BD_FALLAS.length=0;
+    data.fallas.forEach(f=>BD_FALLAS.push({cod:f.cod,sis:f.sis,comp:f.comp}));
+    fillFallaSelects();
+  }
+}
+
+function fillProdSelects(){
+  const opts = PRODS.map(p=>`<option value="${p.id}">${p.id} — ${p.n}</option>`).join('');
+  document.querySelectorAll('.prod-sel').forEach(sel=>{ sel.innerHTML='<option value="">Seleccionar...</option>'+opts; });
+}
+function fillFallaSelects(){
+  const opts = BD_FALLAS.map(f=>`<option value="${f.cod}">${f.cod} — ${f.sis} › ${f.comp}</option>`).join('');
+  document.querySelectorAll('.rf-cod').forEach(sel=>{ sel.innerHTML='<option value="">Seleccionar código...</option>'+opts; });
+}
+function fillFalla(sel){
+  const f=BD_FALLAS.find(x=>x.cod===sel.value);
+  const tr=sel.closest('tr');
+  tr.querySelector('.rf-sis').value=f?f.sis:'';
+  tr.querySelector('.rf-comp').value=f?f.comp:'';
+}
+
+// ═══ NAV ═══
+const PG_TITLES={dashboard:'Dashboard',reporte:'Reporte de Fallas',mantenimiento:'Registro de Mantenimiento','ctrl-fallas':'Control de Fallas','ctrl-mant':'Control de Mantenimientos',ingresos:'Ingresos de Almacén',salidas:'Salidas de Almacén',kardex:'KARDEX General',catalogos:'Catálogos — Almacén',config:'Configuración'};
+function nav(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nv-it').forEach(n=>n.classList.remove('active'));
+  document.getElementById('v-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('pg-title').textContent=PG_TITLES[id]||id;
+  if(id==='ctrl-mant') renderCtrlMant();
+  if(id==='kardex'){
+    if(USE_SHEETS && !DB._kardexCargado){ DB._kardexCargado=true; _loadKardexFromSheets(); }
+    else renderKardex();
+  }
+  if(id==='ctrl-fallas' && USE_SHEETS && !DB._reportesCargados){ DB._reportesCargados=true; _loadReportesFromSheets(); }
+  if(id==='ingresos' && USE_SHEETS && !DB._ingresosCargados){ DB._ingresosCargados=true; _loadIngresosFromSheets(); }
+  if(id==='salidas' && USE_SHEETS && !DB._salidasCargadas){ DB._salidasCargadas=true; _loadSalidasFromSheets(); }
+}
+
+// ═══ UTILS ═══
+function autoKm(targetId,sel){ const el=document.getElementById(targetId); if(el&&KM_MAP[sel.value]) el.value=KM_MAP[sel.value]; }
+function delRow(btn){ const rows=btn.closest('tbody').querySelectorAll('tr'); if(rows.length>1) btn.closest('tr').remove(); }
+function calcCostoRow(inp){
+  const tr=inp.closest('tr');
+  const cant=parseFloat(tr.querySelector('.cant-inp').value)||0;
+  const pu=parseFloat(tr.querySelector('.pu-inp').value)||0;
+  const ct=tr.querySelector('.ct-inp'); if(ct) ct.value=(cant*pu).toFixed(2);
+}
+
+// ═══ DURACIÓN AUTO ═══
+function calcDur(){
+  const f1=document.getElementById('mt-f1').value, h1=document.getElementById('mt-h1').value;
+  const f2=document.getElementById('mt-f2').value, h2=document.getElementById('mt-h2').value;
+  const el=document.getElementById('mt-dur');
+  if(!f1||!h1||!f2||!h2){ el.value=''; return; }
+  const start=new Date(`${f1}T${h1}`), end=new Date(`${f2}T${h2}`);
+  const diff=end-start;
+  if(diff<0){ el.value='Fecha inválida'; return; }
+  const hh=Math.floor(diff/3600000), mm=Math.floor((diff%3600000)/60000);
+  el.value=`${hh}h ${mm}m`;
+}
+
+// ═══ REPORTE DE FALLAS ═══
+function addRFRow(){
+  const tbody=document.getElementById('rf-body');
+  const opts=BD_FALLAS.map(f=>`<option value="${f.cod}">${f.cod} — ${f.sis} › ${f.comp}</option>`).join('');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><select class="fi rf-cod" style="padding:4px 5px;font-size:11px" onchange="fillFalla(this)"><option value="">Seleccionar código...</option>${opts}</select></td>
+    <td><input type="text" class="fi rf-sis" style="padding:4px 6px;font-size:11px" placeholder="Auto..." readonly></td>
+    <td><input type="text" class="fi rf-comp" style="padding:4px 6px;font-size:11px" placeholder="Auto..." readonly></td>
+    <td><input type="text" class="fi rf-det" placeholder="Descripción..." style="padding:4px 6px;font-size:11.5px"></td>
+    <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function clearRF(){ document.getElementById('rf-ndoc').value=''; document.getElementById('rf-placa').value=''; document.getElementById('rf-km').value=''; document.getElementById('rf-personal').value=''; document.getElementById('rf-body').innerHTML=document.getElementById('rf-body').children[0].outerHTML; }
+function grabarRF(){
+  const placa=document.getElementById('rf-placa').value;
+  const personal=document.getElementById('rf-personal').value;
+  if(!placa||!personal){ alert('Selecciona placa y personal que reporta.'); return; }
+  const ndoc=document.getElementById('rf-ndoc').value||nextId('RF');
+  const fecha=document.getElementById('rf-fecha').value;
+  const km=document.getElementById('rf-km').value;
+  const rows=[...document.getElementById('rf-body').querySelectorAll('tr')];
+  const fallas=rows.map(tr=>({
+    cod:       tr.querySelector('.rf-cod')?.value||'—',
+    sistema:   tr.querySelector('.rf-sis')?.value||'—',
+    componente:tr.querySelector('.rf-comp')?.value||'—',
+    detalle:   tr.querySelector('.rf-det')?.value||'—',
+  }));
+  // Añadir a memoria local
+  fallas.forEach(f=>DB.reportes.push({ndoc,fecha,placa,km,personal,...f,estado:'ABIERTO'}));
+  renderReportes();
+  if(USE_SHEETS){
+    _setBusy(true);
+    apiCall('grabarReporte', {ndoc,fecha,placa,km,personal,fallas})
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión con Sheets:\n'+e.message); });
+  }
+  alert(`✅ Reporte ${ndoc} grabado. ${fallas.length} falla(s) registrada(s).`);
+  clearRF();
+}
+function renderReportes(){
+  const tbody=document.getElementById('rf-hist');
+  const cf=document.getElementById('cf-body');
+  if(!DB.reportes.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--mu)">Sin reportes registrados</td></tr>';
+    cf.innerHTML='<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--mu)">Sin reportes aún</td></tr>';
+  } else {
+    const rows=DB.reportes.map(r=>`<tr>
+      <td><strong>${r.ndoc}</strong></td><td>${r.fecha}</td><td><strong>${r.placa}</strong></td>
+      <td>${r.km}</td><td>${r.sistema}</td><td>${r.componente}</td>
+      <td>${r.detalle}</td><td>${r.personal}</td>
+      <td><span class="al-tg rd">ABIERTO</span></td></tr>`).join('');
+    tbody.innerHTML=rows; cf.innerHTML=rows;
+  }
+  const n=DB.reportes.length;
+  document.getElementById('bdg-rf').textContent=n;
+  document.getElementById('bdg-cf').textContent=n;
+  document.getElementById('bd-rf').textContent=n||'';
+  document.getElementById('bd-rf').style.display=n?'':'none';
+}
+
+// ═══ MANTENIMIENTO ═══
+function addMTRow(){
+  const tbody=document.getElementById('mt-body');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Sistema...</option><option>Motor</option><option>Frenos</option><option>Suspensión</option><option>Eléctrico</option><option>Refrigeración</option><option>Transmisión</option><option>Dirección</option><option>Carrocería</option><option>Mano de Obra</option></select></td>
+    <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Método...</option><option>Correctivo</option><option>Preventivo</option><option>Predictivo</option></select></td>
+    <td><input type="text" class="fi" placeholder="Repuesto / Trabajo" style="padding:4px 6px;font-size:11px"></td>
+    <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>-</option><option>Repuesto</option><option>Mano de Obra</option><option>Servicio</option></select></td>
+    <td><select class="fi mon-sel" style="padding:4px 5px;font-size:11px;width:54px"><option value="S/">S/</option><option value="$">$</option></select></td>
+    <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="0" min="0" oninput="calcCostoRow(this)"></td>
+    <td><input type="number" class="fi pu-inp" style="padding:4px 6px;font-size:11px" value="0.00" step="0.01" min="0" oninput="calcCostoRow(this)"></td>
+    <td><input type="number" class="fi ct-inp" style="padding:4px 6px;font-size:11px;font-weight:700" value="0.00" readonly></td>
+    <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function clearMT(){
+  ['mt-ndoc','mt-nombre','mt-km','mt-obs','mt-dur'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['mt-tipo','mt-placa','mt-lugar','mt-tecnico'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const iso=new Date().toISOString().split('T')[0];
+  document.getElementById('mt-f1').value=iso; document.getElementById('mt-f2').value=iso;
+  document.getElementById('mt-h1').value=''; document.getElementById('mt-h2').value='';
+  document.getElementById('mt-body').innerHTML=document.getElementById('mt-body').children[0].outerHTML;
+}
+function grabarMT(){
+  const placa=document.getElementById('mt-placa').value;
+  const tipo=document.getElementById('mt-tipo').value;
+  if(!placa||!tipo){ alert('Selecciona tipo de mantenimiento y placa.'); return; }
+  const ndoc=document.getElementById('mt-ndoc').value||nextId('MT');
+  const rows=[...document.getElementById('mt-body').querySelectorAll('tr')];
+  const repuestos=rows.map(tr=>{
+    const sels=tr.querySelectorAll('select');
+    return {
+      sistema:   sels[0]?.value||'—',
+      metodo:    sels[1]?.value||'—',
+      repuesto:  tr.querySelector('input[type=text]')?.value||'—',
+      tipoCosto: sels[2]?.value||'-',
+      moneda:    tr.querySelector('.mon-sel')?.value||'S/',
+      cant:      parseFloat(tr.querySelector('.cant-inp')?.value)||0,
+      pu:        parseFloat(tr.querySelector('.pu-inp')?.value)||0,
+      total:     parseFloat(tr.querySelector('.ct-inp')?.value)||0,
+    };
+  });
+  const rec={
+    ndoc, nombre:document.getElementById('mt-nombre').value,
+    usuario:'USUARIO',
+    f1:document.getElementById('mt-f1').value, h1:document.getElementById('mt-h1').value,
+    f2:document.getElementById('mt-f2').value, h2:document.getElementById('mt-h2').value,
+    dur:document.getElementById('mt-dur').value,
+    tipo, placa, km:document.getElementById('mt-km').value,
+    lugar:document.getElementById('mt-lugar').value,
+    tecnico:document.getElementById('mt-tecnico').value,
+    obs:document.getElementById('mt-obs').value,
+    estado:'EN PROCESO',
+    repuestos,
+  };
+  // También registrar repuestos usados en KARDEX
+  repuestos.forEach(r=>{
+    if(r.repuesto&&r.repuesto!=='—'&&r.cant>0){
+      const kxId=nextId('KDX');
+      DB.kardex.push({id:kxId,fecha:rec.f1,tipo:'MANTENIMIENTO',idProd:'—',nombre:r.repuesto,cantidad:r.cant,ref:ndoc,notas:`${placa} — ${r.sistema}`});
+    }
+  });
+  DB.mantos.push(rec);
+  document.getElementById('kpi-mant').textContent=105+DB.mantos.length;
+  document.getElementById('kpi-mant-sub').textContent=`${DB.mantos.length} registrado(s) esta sesión`;
+  actualizarKxDash();
+  if(USE_SHEETS){
+    const datos={
+      ndoc, nombre:rec.nombre, tipo:rec.tipo,
+      f1:rec.f1, h1:rec.h1, f2:rec.f2, h2:rec.h2, dur:rec.dur,
+      placa:rec.placa, km:rec.km, lugar:rec.lugar, tecnico:rec.tecnico, obs:rec.obs,
+      repuestos:repuestos.map(r=>({sistema:r.sistema,repuesto:r.repuesto,moneda:r.moneda,cant:r.cant,pu:r.pu,total:r.total})),
+    };
+    _setBusy(true);
+    apiCall('grabarMantenimiento', datos)
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión con Sheets:\n'+e.message); });
+  }
+  alert(`✅ Mantenimiento ${ndoc} grabado con ${repuestos.length} repuesto(s).`);
+  clearMT();
+}
+
+// ═══ CONTROL DE MANTENIMIENTOS ═══
+function renderCtrlMant(){
+  // Si estamos en Sheets y no hay datos locales, cargar primero
+  if(USE_SHEETS && !DB._mantosCargados){
+    DB._mantosCargados=true;
+    _loadMantenimientosFromSheets();
+    return; // se vuelve a llamar cuando termine la carga
+  }
+  const q=(document.getElementById('cm-search').value||'').toLowerCase();
+  const tipo=document.getElementById('cm-tipo').value;
+  const placa=document.getElementById('cm-placa').value;
+  const tbody=document.getElementById('cm-body');
+  const filtered=DB.mantos.filter(m=>{
+    if(tipo&&m.tipo!==tipo) return false;
+    if(placa&&m.placa!==placa) return false;
+    if(q&&![m.ndoc,m.nombre,m.placa,m.tecnico,m.lugar,...m.repuestos.map(r=>r.repuesto)].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('bdg-cm').textContent=filtered.length;
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="17" style="text-align:center;padding:18px;color:var(--mu)">Sin resultados</td></tr>'; return;
+  }
+  const rows=[];
+  filtered.forEach((m,mi)=>{
+    const idx=DB.mantos.indexOf(m);
+    const estCls={
+      'EN PROCESO':'est-ep','COMPLETADO':'est-co','PENDIENTE':'est-pe','CANCELADO':'est-ca'
+    };
+    const est=m.estado||'EN PROCESO';
+    if(!m.repuestos.length){
+      rows.push(`<tr>
+        <td><strong>${m.ndoc}</strong></td><td>${m.nombre||'—'}</td><td>${m.f1}</td><td>${m.f2||'—'}</td>
+        <td><span class="al-tg ${m.tipo==='CORRECTIVO'?'bl':m.tipo==='PREDICTIVO'?'yw':'gr'}">${m.tipo}</span></td>
+        <td><strong>${m.placa}</strong></td><td>${m.km}</td><td>${m.tecnico||'—'}</td><td>${m.lugar||'—'}</td>
+        <td colspan="6" style="color:var(--mu);font-size:11px">Sin repuestos registrados</td>
+        <td><button class="est-btn ${estCls[est]||'est-ep'}" onclick="toggleEstado(${idx})">${est}</button></td>
+        <td><button class="btn-ic edt" onclick="openEdit(${idx})" title="Editar">✏️</button></td></tr>`);
+    } else {
+      m.repuestos.forEach((r,ri)=>{
+        rows.push(`<tr>
+          ${ri===0?`<td rowspan="${m.repuestos.length}"><strong>${m.ndoc}</strong></td>
+            <td rowspan="${m.repuestos.length}">${m.nombre||'—'}</td>
+            <td rowspan="${m.repuestos.length}">${m.f1}</td>
+            <td rowspan="${m.repuestos.length}">${m.f2||'—'}</td>
+            <td rowspan="${m.repuestos.length}"><span class="al-tg ${m.tipo==='CORRECTIVO'?'bl':m.tipo==='PREDICTIVO'?'yw':'gr'}">${m.tipo}</span></td>
+            <td rowspan="${m.repuestos.length}"><strong>${m.placa}</strong></td>
+            <td rowspan="${m.repuestos.length}">${m.km}</td>
+            <td rowspan="${m.repuestos.length}">${m.tecnico||'—'}</td>
+            <td rowspan="${m.repuestos.length}">${m.lugar||'—'}</td>`:''}
+          <td>${r.sistema}</td><td>${r.repuesto}</td>
+          <td style="text-align:center">${r.moneda||'S/'}</td>
+          <td style="text-align:center">${r.cant}</td>
+          <td style="text-align:right">${r.pu.toFixed(2)}</td>
+          <td style="text-align:right;font-weight:700">${r.total.toFixed(2)}</td>
+          ${ri===0?`<td rowspan="${m.repuestos.length}"><button class="est-btn ${estCls[est]||'est-ep'}" onclick="toggleEstado(${idx})">${est}</button></td>
+            <td rowspan="${m.repuestos.length}"><button class="btn-ic edt" onclick="openEdit(${idx})" title="Editar">✏️</button></td>`:''}
+        </tr>`);
+      });
+    }
+  });
+  tbody.innerHTML=rows.join('');
+}
+
+// ═══ MODAL EDITAR ═══
+function openEdit(idx){
+  const m=DB.mantos[idx];
+  document.getElementById('me-ndoc').value=m.ndoc||'';
+  document.getElementById('me-nombre').value=m.nombre||'';
+  document.getElementById('me-tipo').value=m.tipo||'';
+  document.getElementById('me-f1').value=m.f1||'';
+  document.getElementById('me-h1').value=m.h1||'';
+  document.getElementById('me-f2').value=m.f2||'';
+  document.getElementById('me-h2').value=m.h2||'';
+  document.getElementById('me-dur').value=m.dur||'';
+  document.getElementById('me-placa').value=m.placa||'';
+  document.getElementById('me-km').value=m.km||'';
+  document.getElementById('me-lugar').value=m.lugar||'';
+  document.getElementById('me-tecnico').value=m.tecnico||'';
+  document.getElementById('me-estado').value=m.estado||'EN PROCESO';
+  document.getElementById('me-obs').value=m.obs||'';
+  document.getElementById('me-idx').value=idx;
+  document.getElementById('modal-edit').classList.add('open');
+}
+function calcDurEdit(){
+  const f1=document.getElementById('me-f1').value, h1=document.getElementById('me-h1').value;
+  const f2=document.getElementById('me-f2').value, h2=document.getElementById('me-h2').value;
+  const el=document.getElementById('me-dur');
+  if(!f1||!h1||!f2||!h2){ el.value=''; return; }
+  const start=new Date(`${f1}T${h1}`), end=new Date(`${f2}T${h2}`);
+  const diff=end-start;
+  if(diff<0){ el.value='Fecha inválida'; return; }
+  const hh=Math.floor(diff/3600000), mm=Math.floor((diff%3600000)/60000);
+  el.value=`${hh}h ${mm}m`;
+}
+function closeModal(){ document.getElementById('modal-edit').classList.remove('open'); }
+function saveEdit(){
+  const idx=parseInt(document.getElementById('me-idx').value);
+  const m=DB.mantos[idx];
+  m.ndoc=document.getElementById('me-ndoc').value;
+  m.nombre=document.getElementById('me-nombre').value;
+  m.tipo=document.getElementById('me-tipo').value;
+  m.f1=document.getElementById('me-f1').value;
+  m.h1=document.getElementById('me-h1').value;
+  m.f2=document.getElementById('me-f2').value;
+  m.h2=document.getElementById('me-h2').value;
+  m.dur=document.getElementById('me-dur').value;
+  m.placa=document.getElementById('me-placa').value;
+  m.km=document.getElementById('me-km').value;
+  m.lugar=document.getElementById('me-lugar').value;
+  m.tecnico=document.getElementById('me-tecnico').value;
+  m.estado=document.getElementById('me-estado').value;
+  m.obs=document.getElementById('me-obs').value;
+  closeModal(); renderCtrlMant();
+  if(USE_SHEETS){
+    _setBusy(true);
+    apiCall('updateManto', {ndoc:m.ndoc,nombre:m.nombre,tipo:m.tipo,f1:m.f1,h1:m.h1,f2:m.f2,h2:m.h2,dur:m.dur,placa:m.placa,km:m.km,lugar:m.lugar,tecnico:m.tecnico,estado:m.estado,obs:m.obs})
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al actualizar en Sheets:\n'+(r&&r.error||'desconocido')); })
+      .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
+  }
+}
+function toggleEstado(idx){
+  const ESTADOS=['EN PROCESO','COMPLETADO','PENDIENTE','CANCELADO'];
+  const m=DB.mantos[idx];
+  const cur=ESTADOS.indexOf(m.estado||'EN PROCESO');
+  m.estado=ESTADOS[(cur+1)%4];
+  renderCtrlMant();
+  if(USE_SHEETS){
+    apiCall('updateEstadoManto', {ndoc:m.ndoc, estado:m.estado})
+      .catch(e=>console.error('updateEstadoManto fail',e));
+  }
+}
+
+// ═══ DATALIST HELPERS ═══
+function saveProv(){
+  const val=document.getElementById('ing-prov').value.trim();
+  if(!val) return;
+  if(!DB.proveedores.includes(val)){
+    DB.proveedores.push(val);
+    const opt=document.createElement('option'); opt.value=val;
+    document.getElementById('dl-proveedores').appendChild(opt);
+  }
+}
+function saveNombreRep(){
+  const val=document.getElementById('mt-nombre').value.trim();
+  if(!val) return;
+  if(!DB.nombresRep.includes(val)){
+    DB.nombresRep.push(val);
+    const opt=document.createElement('option'); opt.value=val;
+    document.getElementById('dl-nombres-rep').appendChild(opt);
+  }
+}
+
+// ═══ INGRESOS ═══
+function addIngRow(){
+  const tbody=document.getElementById('ing-body');
+  const opts=PRODS.map(p=>`<option value="${p.id}">${p.id} — ${p.n}</option>`).join('');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><select class="fi prod-sel" style="padding:4px 6px;font-size:11px" onchange="fillProdName(this)"><option value="">Seleccionar...</option>${opts}</select></td>
+    <td><input type="text" class="fi prod-nombre" style="padding:4px 6px;font-size:11px" placeholder="Nombre" readonly></td>
+    <td><input type="text" class="fi prod-unidad" style="padding:4px 6px;font-size:11px" placeholder="und" readonly></td>
+    <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="1" min="1" oninput="calcCostoRow(this)"></td>
+    <td><input type="number" class="fi pu-inp" style="padding:4px 6px;font-size:11px" value="0.00" step="0.01" oninput="calcCostoRow(this)"></td>
+    <td><input type="number" class="fi ct-inp" style="padding:4px 6px;font-size:11px;font-weight:700;color:var(--gr)" value="0.00" readonly></td>
+    <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function fillProdName(sel){
+  const p=PRODS.find(x=>x.id===sel.value);
+  const tr=sel.closest('tr');
+  if(p){ tr.querySelector('.prod-nombre').value=p.n; tr.querySelector('.prod-unidad').value=p.u||'und'; }
+}
+function fillProdSal(sel){
+  const p=PRODS.find(x=>x.id===sel.value);
+  const tr=sel.closest('tr');
+  if(p){
+    tr.querySelector('.prod-nombre').value=p.n;
+    const st=DB.stock[sel.value]||0;
+    tr.querySelector('.prod-stock').value=`${st} ${p.u||'und'}`;
+    tr.querySelector('.prod-stock').style.color=st<=0?'var(--rd)':st<=3?'var(--yw)':'var(--gr)';
+  }
+}
+function clearIng(){ document.getElementById('ing-ndoc').value=''; document.getElementById('ing-prov').value=''; document.getElementById('ing-notas').value=''; document.getElementById('ing-body').innerHTML=document.getElementById('ing-body').children[0].outerHTML; fillProdSelects(); }
+function grabarIngreso(){
+  const fecha=document.getElementById('ing-fecha').value;
+  const ndoc=document.getElementById('ing-ndoc').value||nextId('ING');
+  const prov=document.getElementById('ing-prov').value||'Sin especificar';
+  const notas=document.getElementById('ing-notas').value;
+  const rows=[...document.getElementById('ing-body').querySelectorAll('tr')];
+  let ok=0;
+  rows.forEach(tr=>{
+    const idProd=tr.querySelector('.prod-sel').value;
+    const nombre=tr.querySelector('.prod-nombre').value;
+    const unidad=tr.querySelector('.prod-unidad').value;
+    const cant=parseFloat(tr.querySelector('.cant-inp').value)||0;
+    const pu=parseFloat(tr.querySelector('.pu-inp').value)||0;
+    const total=parseFloat(tr.querySelector('.ct-inp').value)||0;
+    if(!idProd||cant<=0) return;
+    const ingId=nextId('ING');
+    const kxId=nextId('KDX');
+    DB.ingresos.push({id:ingId,fecha,ndoc,proveedor:prov,idProd,nombre,unidad,cantidad:cant,pu,total});
+    DB.kardex.push({id:kxId,fecha,tipo:'INGRESO',idProd,nombre,cantidad:cant,ref:ndoc,notas:notas||prov});
+    DB.stock[idProd]=(DB.stock[idProd]||0)+cant;
+    ok++;
+  });
+  if(!ok){ alert('Selecciona al menos un producto con cantidad > 0.'); return; }
+  renderIngHist(); actualizarKxDash();
+  if(USE_SHEETS){
+    // Reconstruir items para Sheets (solo los válidos)
+    const itemsSheets=[];
+    [...document.getElementById('ing-body').querySelectorAll('tr')].forEach(tr=>{
+      const idProd=tr.querySelector('.prod-sel')?.value;
+      const nombre=tr.querySelector('.prod-nombre')?.value||'';
+      const unidad=tr.querySelector('.prod-unidad')?.value||'und';
+      const cant=parseFloat(tr.querySelector('.cant-inp')?.value)||0;
+      const pu=parseFloat(tr.querySelector('.pu-inp')?.value)||0;
+      const total=parseFloat(tr.querySelector('.ct-inp')?.value)||0;
+      if(idProd&&cant>0) itemsSheets.push({idProd,nombre,unidad,cantidad:cant,pu,total});
+    });
+    if(itemsSheets.length){
+      _setBusy(true);
+      apiCall('grabarIngreso', {fecha,ndoc,proveedor:prov,notas,items:itemsSheets})
+        .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); })
+        .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
+    }
+  }
+  alert(`✅ Ingreso registrado: ${ok} producto(s) → KARDEX actualizado.`);
+  clearIng();
+}
+function renderIngHist(){
+  const tbody=document.getElementById('ing-hist');
+  if(!DB.ingresos.length){ tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:18px;color:var(--mu)">Sin ingresos registrados</td></tr>'; return; }
+  tbody.innerHTML=DB.ingresos.map(r=>`<tr>
+    <td><strong>${r.id}</strong></td><td>${r.fecha}</td><td>${r.ndoc}</td><td>${r.proveedor}</td>
+    <td>${r.idProd}</td><td>${r.nombre}</td><td>${r.unidad}</td>
+    <td style="text-align:center">${r.cantidad}</td>
+    <td style="text-align:right">${r.pu.toFixed(2)}</td>
+    <td style="text-align:right;font-weight:700;color:var(--gr)">${r.total.toFixed(2)}</td></tr>`).join('');
+  document.getElementById('bdg-ing').textContent=DB.ingresos.length;
+}
+
+// ═══ SALIDAS ═══
+function addSalRow(){
+  const tbody=document.getElementById('sal-body');
+  const opts=PRODS.map(p=>`<option value="${p.id}">${p.id} — ${p.n}</option>`).join('');
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><select class="fi prod-sel" style="padding:4px 6px;font-size:11px" onchange="fillProdSal(this)"><option value="">Seleccionar...</option>${opts}</select></td>
+    <td><input type="text" class="fi prod-nombre" style="padding:4px 6px;font-size:11px" placeholder="Nombre" readonly></td>
+    <td><input type="text" class="fi prod-stock" style="padding:4px 6px;font-size:11px;text-align:center" placeholder="-" readonly></td>
+    <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="1" min="1"></td>
+    <td><button class="btn-ic del" onclick="delRow(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+function clearSal(){ document.getElementById('sal-ndoc').value=''; document.getElementById('sal-dest').value=''; document.getElementById('sal-notas').value=''; document.getElementById('sal-body').innerHTML=document.getElementById('sal-body').children[0].outerHTML; fillProdSelects(); }
+function grabarSalida(){
+  const fecha=document.getElementById('sal-fecha').value;
+  const ndoc=document.getElementById('sal-ndoc').value||nextId('SAL');
+  const dest=document.getElementById('sal-dest').value||'Sin especificar';
+  const notas=document.getElementById('sal-notas').value;
+  const rows=[...document.getElementById('sal-body').querySelectorAll('tr')];
+  let ok=0, errs=[];
+  rows.forEach(tr=>{
+    const idProd=tr.querySelector('.prod-sel').value;
+    const nombre=tr.querySelector('.prod-nombre').value;
+    const cant=parseFloat(tr.querySelector('.cant-inp').value)||0;
+    if(!idProd||cant<=0) return;
+    const stock=DB.stock[idProd]||0;
+    if(cant>stock){ errs.push(`${nombre}: stock insuficiente (disponible: ${stock})`); return; }
+    const salId=nextId('SAL');
+    const kxId=nextId('KDX');
+    DB.salidas.push({id:salId,fecha,ndoc,destino:dest,idProd,nombre,cantidad:cant});
+    DB.kardex.push({id:kxId,fecha,tipo:'SALIDA',idProd,nombre,cantidad:cant,ref:ndoc,notas:notas||dest});
+    DB.stock[idProd]-=cant;
+    ok++;
+  });
+  if(errs.length){ alert('⚠️ Errores:\n'+errs.join('\n')); }
+  if(!ok&&!errs.length){ alert('Selecciona al menos un producto con cantidad > 0.'); return; }
+  if(ok){
+    renderSalHist(); actualizarKxDash();
+    if(USE_SHEETS){
+      const itemsSheets=[];
+      rows.forEach(tr=>{
+        const idProd=tr.querySelector('.prod-sel')?.value;
+        const nombre=tr.querySelector('.prod-nombre')?.value||'';
+        const cant=parseFloat(tr.querySelector('.cant-inp')?.value)||0;
+        if(idProd&&cant>0) itemsSheets.push({idProd,nombre,cantidad:cant});
+      });
+      if(itemsSheets.length){
+        _setBusy(true);
+        apiCall('grabarSalida', {fecha,ndoc,destino:dest,notas,items:itemsSheets})
+          .then(r=>{
+            _setBusy(false);
+            if(r&&r.errores&&r.errores.length) alert('⚠️ Sheets rechazó algunas salidas:\n'+r.errores.join('\n'));
+            else if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido'));
+          })
+          .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
+      }
+    }
+    alert(`✅ Salida registrada: ${ok} producto(s) → KARDEX actualizado.`); clearSal();
+  }
+}
+function renderSalHist(){
+  const tbody=document.getElementById('sal-hist');
+  if(!DB.salidas.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--mu)">Sin salidas registradas</td></tr>'; return; }
+  tbody.innerHTML=DB.salidas.map(r=>`<tr>
+    <td><strong>${r.id}</strong></td><td>${r.fecha}</td><td>${r.ndoc}</td><td>${r.destino}</td>
+    <td>${r.idProd}</td><td>${r.nombre}</td>
+    <td style="text-align:center;font-weight:700;color:var(--rd)">${r.cantidad}</td></tr>`).join('');
+  document.getElementById('bdg-sal').textContent=DB.salidas.length;
+}
+
+// ═══ KARDEX ═══
+function renderKardex(){
+  const q=(document.getElementById('kx-search').value||'').toLowerCase();
+  const tipo=document.getElementById('kx-tipo').value;
+  const filtered=DB.kardex.filter(k=>{
+    if(tipo&&k.tipo!==tipo) return false;
+    if(q&&![k.id,k.tipo,k.idProd,k.nombre,k.ref,k.notas].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  }).slice().reverse();
+  const tbody=document.getElementById('kx-body');
+  document.getElementById('bdg-kx').textContent=`${DB.kardex.length} movim.`;
+  if(!filtered.length){ tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--mu)">Sin movimientos en KARDEX</td></tr>'; return; }
+  tbody.innerHTML=filtered.map(k=>`<tr>
+    <td><strong>${k.id}</strong></td><td>${k.fecha}</td>
+    <td><span class="kx-${k.tipo==='INGRESO'?'ing':k.tipo==='SALIDA'?'sal':'mnt'}">${k.tipo}</span></td>
+    <td>${k.idProd}</td><td>${k.nombre}</td>
+    <td style="text-align:center;font-weight:700;color:${k.tipo==='INGRESO'?'var(--gr)':k.tipo==='SALIDA'?'var(--rd)':'var(--yw)'}">${k.tipo==='SALIDA'?'-':'+'} ${k.cantidad}</td>
+    <td>${k.ref}</td><td>${k.notas}</td></tr>`).join('');
+}
+function actualizarKxDash(){
+  const n=DB.kardex.length;
+  document.getElementById('bdg-kx-total').textContent=`${n} MOVIM.`;
+  const recientes=DB.kardex.slice(-5).reverse();
+  const el=document.getElementById('kx-dash-list');
+  if(!recientes.length){ el.innerHTML='<div style="text-align:center;color:var(--mu);padding:20px;font-size:12px">Sin movimientos aún</div>'; return; }
+  el.innerHTML=recientes.map(k=>`<div class="al">
+    <span class="al-dot ${k.tipo==='INGRESO'?'gr':k.tipo==='SALIDA'?'rd':'yw'}"></span>
+    <div style="flex:1"><div class="al-n">${k.nombre}</div><div class="al-i">${k.fecha} · ${k.ref}</div></div>
+    <span class="al-tg ${k.tipo==='INGRESO'?'gr':k.tipo==='SALIDA'?'rd':'yw'}">${k.tipo==='SALIDA'?'-':'+'} ${k.cantidad}</span>
+  </div>`).join('');
+}
+
+// ═══ CARGAR HISTORIALES DESDE SHEETS ═══
+function _loadMantenimientosFromSheets(){
+  _setBusy(true);
+  apiCall('getMantenimientos')
+    .then(r=>{
+      _setBusy(false);
+      if(r&&r.ok&&r.data){ DB.mantos=r.data; renderCtrlMant(); }
+    })
+    .catch(e=>{ _setBusy(false); console.error('getMantenimientos fail',e); renderCtrlMant(); });
+}
+function _loadReportesFromSheets(){
+  _setBusy(true);
+  apiCall('getReportes')
+    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.reportes=r.data; renderReportes(); } })
+    .catch(e=>{ _setBusy(false); console.error('getReportes fail',e); });
+}
+function _loadIngresosFromSheets(){
+  _setBusy(true);
+  apiCall('getIngresos')
+    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.ingresos=r.data; renderIngHist(); } })
+    .catch(e=>{ _setBusy(false); console.error('getIngresos fail',e); });
+}
+function _loadSalidasFromSheets(){
+  _setBusy(true);
+  apiCall('getSalidas')
+    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.salidas=r.data; renderSalHist(); } })
+    .catch(e=>{ _setBusy(false); console.error('getSalidas fail',e); });
+}
+function _loadKardexFromSheets(){
+  _setBusy(true);
+  apiCall('getKardex')
+    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.kardex=r.data; renderKardex(); actualizarKxDash(); } })
+    .catch(e=>{ _setBusy(false); console.error('getKardex fail',e); });
+}
+</script>
+</body>
+</html>
