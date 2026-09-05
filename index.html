@@ -227,29 +227,20 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=
   <!-- ══════ DASHBOARD ══════ -->
   <div id="v-dashboard" class="view active">
     <div class="kpi-grid">
-      <div class="kpi bl" data-ic="🚛"><div class="kpi-ic">🚛</div><div class="kpi-v">11</div><div class="kpi-l">Tractos en flota</div><div class="kpi-s bl" style="color:var(--bl)">9 operativos · 2 en taller</div></div>
-      <div class="kpi rd" data-ic="⚠️"><div class="kpi-ic">⚠️</div><div class="kpi-v" id="kpi-alertas">7</div><div class="kpi-l">Alertas activas</div><div class="kpi-s" style="color:var(--rd)">3 críticas · 4 advertencias</div></div>
+      <div class="kpi bl" data-ic="🚛"><div class="kpi-ic">🚛</div><div class="kpi-v" id="kpi-flota">11</div><div class="kpi-l">Tractos en flota</div><div class="kpi-s" id="kpi-flota-sub" style="color:var(--bl)">9 operativos · 2 en taller</div></div>
+      <div class="kpi rd" data-ic="⚠️"><div class="kpi-ic">⚠️</div><div class="kpi-v" id="kpi-alertas">7</div><div class="kpi-l">Alertas activas</div><<div class="kpi-s" id="kpi-alertas-sub" style="color:var(--rd)">3 críticas · 4 advertencias</div>
       <div class="kpi yw" data-ic="📦"><div class="kpi-ic">📦</div><div class="kpi-v" id="kpi-stock">12</div><div class="kpi-l">Productos stock bajo</div><div class="kpi-s" style="color:var(--yw)">Requieren reposición</div></div>
       <div class="kpi gr" data-ic="✅"><div class="kpi-ic">✅</div><div class="kpi-v" id="kpi-mant">105</div><div class="kpi-l">Reparaciones totales</div><div class="kpi-s" style="color:var(--gr)" id="kpi-mant-sub">8 este mes</div></div>
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-hd"><span>📄</span><h3>Documentos por Vencer</h3><span class="bdg bdg-rd">3 CRÍTICO</span></div>
-        <div class="card-bd">
-          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">A4S-921 — SOAT</div><div class="al-i">Vence: 10/09/2026</div></div><span class="al-tg rd">⛔ 5 días</span></div>
-          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">F7K-348 — Rev. Técnica</div><div class="al-i">Vence: 12/09/2026</div></div><span class="al-tg rd">⛔ 7 días</span></div>
-          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">B2M-105 — MTC</div><div class="al-i">Vence: 25/09/2026</div></div><span class="al-tg yw">⚠️ 20 días</span></div>
-          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">Pedro R. — Licencia A3</div><div class="al-i">Vence: 02/10/2026</div></div><span class="al-tg yw">⚠️ 27 días</span></div>
-          <div class="al"><span class="al-dot gr"></span><div style="flex:1"><div class="al-n">C9L-774 — SOAT</div><div class="al-i">Vence: 15/03/2027</div></div><span class="al-tg gr">✅ 191 días</span></div>
+        <div class="card-hd"><span>📄</span><h3>Documentos por Vencer</h3><span class="bdg bdg-rd" id="bdg-docs">3 CRÍTICO</span></div>
+        <div class="card-bd" id="docs-dash">
         </div>
-      </div>
+    </div>
       <div class="card">
-        <div class="card-hd"><span>🔧</span><h3>Mantenimientos Próximos</h3><span class="bdg bdg-yw">4 PENDIENTES</span></div>
-        <div class="card-bd">
-          <div class="al"><span class="al-dot rd"></span><div style="flex:1"><div class="al-n">A4S-921 — Cambio aceite motor</div><div class="al-i">KM 125,400 · Próx 125,000</div><div class="mpb"><div class="mpf rd" style="width:100%"></div></div></div><span class="al-tg rd">VENCIDO</span></div>
-          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">F7K-348 — Filtros completos</div><div class="al-i">KM 89,200 · Próx 90,000</div><div class="mpb"><div class="mpf yw" style="width:86%"></div></div></div><span class="al-tg yw">800 KM</span></div>
-          <div class="al"><span class="al-dot yw"></span><div style="flex:1"><div class="al-n">B2M-105 — Frenos delanteros</div><div class="al-i">KM 67,800 · Próx 70,000</div><div class="mpb"><div class="mpf yw" style="width:70%"></div></div></div><span class="al-tg yw">2,200 KM</span></div>
-          <div class="al"><span class="al-dot bl"></span><div style="flex:1"><div class="al-n">C9L-774 — Refrig. preventivo</div><div class="al-i">KM 43,100 · Próx 50,000</div><div class="mpb"><div class="mpf bl" style="width:45%"></div></div></div><span class="al-tg bl">6,900 KM</span></div>
+        <div class="card-hd"><span>🔧</span><h3>Mantenimientos Próximos</h3><span class="bdg bdg-yw" id="bdg-mant-prox">4 PENDIENTES</span></div>
+        <div class="card-bd" id="mant-dash">
         </div>
       </div>
     </div>
@@ -888,6 +879,56 @@ window.onload=()=>{
   }
 };
 
+function _loadDashboardFromSheets(){
+  _setBusy(true);
+  apiCall('getDashboardData')
+    .then(r=>{ _setBusy(false); if(r&&r.ok) renderDashboard(r.data); else console.error('getDashboardData error', r); })
+    .catch(e=>{ _setBusy(false); console.error('getDashboardData fail', e); });
+}
+
+function renderDashboard(d){
+  // KPI Flota
+  document.getElementById('kpi-flota').textContent = d.flota.total;
+  document.getElementById('kpi-flota-sub').textContent = `${d.flota.activos} activos`;
+
+  // KPI Alertas
+  const criticos = d.documentos.filter(x=>x.nivel==='rd').length + d.mantenimientos.filter(x=>x.nivel==='rd').length;
+  const advertencias = d.documentos.filter(x=>x.nivel==='yw').length + d.mantenimientos.filter(x=>x.nivel==='yw').length;
+  document.getElementById('kpi-alertas').textContent = criticos + advertencias;
+  document.getElementById('kpi-alertas-sub').textContent = `${criticos} críticas · ${advertencias} advertencias`;
+
+  // KPI Stock bajo
+  document.getElementById('kpi-stock').textContent = d.stockBajo.total;
+  document.getElementById('bdg-stock-bajo').textContent = `${d.stockBajo.total} ITEMS`;
+
+  // KPI Reparaciones
+  document.getElementById('kpi-mant').textContent = d.reparaciones.total;
+  document.getElementById('kpi-mant-sub').textContent = `${d.reparaciones.esteMes} este mes`;
+
+  // Documentos por vencer
+  const docsBox = document.getElementById('docs-dash');
+  document.getElementById('bdg-docs').textContent = `${criticos} CRÍTICO`;
+  docsBox.innerHTML = d.documentos.length ? d.documentos.map(x=>{
+    const etiqueta = x.dias<=0 ? `⛔ Vencido` : x.nivel==='rd' ? `⛔ ${x.dias} días` : x.nivel==='yw' ? `⚠️ ${x.dias} días` : `✅ ${x.dias} días`;
+    return `<div class="al"><span class="al-dot ${x.nivel}"></span><div style="flex:1"><div class="al-n">${x.placa} — ${x.tipo}</div><div class="al-i">Vence: ${x.fechaStr}</div></div><span class="al-tg ${x.nivel}">${etiqueta}</span></div>`;
+  }).join('') : '<div style="text-align:center;color:var(--mu);padding:16px;font-size:12px">Sin documentos próximos a vencer</div>';
+
+  // Mantenimientos próximos
+  const mantBox = document.getElementById('mant-dash');
+  document.getElementById('bdg-mant-prox').textContent = `${d.mantenimientos.filter(x=>x.nivel!=='bl').length} PENDIENTES`;
+  mantBox.innerHTML = d.mantenimientos.length ? d.mantenimientos.map(x=>{
+    const pct = Math.min(100, Math.max(0, ((x.kmProximo - x.faltante>0?x.kmActual:x.kmActual) / x.kmProximo) * 100)).toFixed(0);
+    const etiqueta = x.faltante<=0 ? 'VENCIDO' : `${x.faltante.toLocaleString('es-PE')} KM`;
+    return `<div class="al"><span class="al-dot ${x.nivel}"></span><div style="flex:1"><div class="al-n">${x.placa} — Mantenimiento programado</div><div class="al-i">KM ${x.kmActual.toLocaleString('es-PE')} · Próx ${x.kmProximo.toLocaleString('es-PE')}</div><div class="mpb"><div class="mpf ${x.nivel}" style="width:${pct}%"></div></div></div><span class="al-tg ${x.nivel}">${etiqueta}</span></div>`;
+  }).join('') : '<div style="text-align:center;color:var(--mu);padding:16px;font-size:12px">Sin mantenimientos próximos</div>';
+
+  // Stock bajo
+  const stockBox = document.getElementById('stock-dash');
+  stockBox.innerHTML = d.stockBajo.items.length ? d.stockBajo.items.map(p=>
+    `<div class="si"><span class="al-dot ${p.nivel}"></span><span class="si-n">${p.nombre}</span><span class="si-q ${p.nivel==='rd'?'low':'wrn'}">${p.cantidad} ${p.unidad}</span></div>`
+  ).join('') : '<div style="text-align:center;color:var(--mu);padding:16px;font-size:12px">Sin productos con stock bajo</div>';
+}
+
 // ─── Busy overlay helper ─────────────────────────────────────────────────────
 function _setBusy(on){
   let el=document.getElementById('__busy');
@@ -964,6 +1005,8 @@ function nav(id,el){
   document.getElementById('v-'+id).classList.add('active');
   if(el) el.classList.add('active');
   document.getElementById('pg-title').textContent=PG_TITLES[id]||id;
+  if(id==='dashboard' && USE_SHEETS) _loadDashboardFromSheets();
+    if(USE_SHEETS) _loadDashboardFromSheets();
   if(id==='ctrl-mant') renderCtrlMant();
   if(id==='kardex'){
     if(USE_SHEETS && !DB._kardexCargado){ DB._kardexCargado=true; _loadKardexFromSheets(); }
