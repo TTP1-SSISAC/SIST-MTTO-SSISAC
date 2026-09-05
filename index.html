@@ -390,7 +390,7 @@ select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=
               <tr>
                 <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Sistema...</option><option>Motor</option><option>Frenos</option><option>Suspensión</option><option>Eléctrico</option><option>Refrigeración</option><option>Transmisión</option><option>Dirección</option><option>Carrocería</option><option>Mano de Obra</option></select></td>
                 <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>Método...</option><option>Correctivo</option><option>Preventivo</option><option>Predictivo</option></select></td>
-                <td><input type="text" class="fi" placeholder="Repuesto / Trabajo" style="padding:4px 6px;font-size:11px" oninput="calcCosto(this)"></td>
+                <td><input type="text" class="fi" placeholder="Repuesto / Trabajo" style="padding:4px 6px;font-size:11px"></td>
                 <td><select class="fi" style="padding:4px 6px;font-size:11px"><option>-</option><option>Repuesto</option><option>Mano de Obra</option><option>Servicio</option></select></td>
                 <td><select class="fi mon-sel" style="padding:4px 5px;font-size:11px;width:54px"><option value="S/">S/</option><option value="$">$</option></select></td>
                 <td><input type="number" class="fi cant-inp" style="padding:4px 6px;font-size:11px" value="0" min="0" oninput="calcCostoRow(this)"></td>
@@ -878,6 +878,11 @@ window.onload=()=>{
         // Cargar el dashboard con datos reales de Sheets, sea cual sea el
         // resultado de getInitialData (el dashboard tiene su propio endpoint).
         _loadDashboardFromSheets();
+        // También cargar el KARDEX real para la tarjeta "Últimos Movimientos"
+        // del dashboard (si no se hace esto, esa tarjeta solo mostraría
+        // movimientos hechos en la sesión actual, nunca el histórico real).
+        DB._kardexCargado=true;
+        _loadKardexFromSheets();
       })
       .catch(e=>{
         _setBusy(false);
@@ -1187,7 +1192,7 @@ function grabarMT(){
     };
     _setBusy(true);
     apiCall('grabarMantenimiento', datos)
-      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
+      .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else { _loadDashboardFromSheets(); _loadKardexFromSheets(); } })
       .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión con Sheets:\n'+e.message); });
   }
   alert(`✅ Mantenimiento ${ndoc} grabado con ${repuestos.length} repuesto(s).`);
@@ -1417,7 +1422,7 @@ function grabarIngreso(){
     if(itemsSheets.length){
       _setBusy(true);
       apiCall('grabarIngreso', {fecha,ndoc,proveedor:prov,notas,items:itemsSheets})
-        .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else _loadDashboardFromSheets(); })
+        .then(r=>{ _setBusy(false); if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido')); else { _loadDashboardFromSheets(); _loadKardexFromSheets(); } })
         .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
     }
   }
@@ -1457,6 +1462,7 @@ function grabarSalida(){
   const notas=document.getElementById('sal-notas').value;
   const rows=[...document.getElementById('sal-body').querySelectorAll('tr')];
   let ok=0, errs=[];
+  const itemsSheets=[];
   rows.forEach(tr=>{
     const idProd=tr.querySelector('.prod-sel').value;
     const nombre=tr.querySelector('.prod-nombre').value;
@@ -1469,6 +1475,7 @@ function grabarSalida(){
     DB.salidas.push({id:salId,fecha,ndoc,destino:dest,idProd,nombre,cantidad:cant});
     DB.kardex.push({id:kxId,fecha,tipo:'SALIDA',idProd,nombre,cantidad:cant,ref:ndoc,notas:notas||dest});
     DB.stock[idProd]-=cant;
+    itemsSheets.push({idProd,nombre,cantidad:cant});
     ok++;
   });
   if(errs.length){ alert('⚠️ Errores:\n'+errs.join('\n')); }
@@ -1476,13 +1483,6 @@ function grabarSalida(){
   if(ok){
     renderSalHist(); actualizarKxDash();
     if(USE_SHEETS){
-      const itemsSheets=[];
-      rows.forEach(tr=>{
-        const idProd=tr.querySelector('.prod-sel')?.value;
-        const nombre=tr.querySelector('.prod-nombre')?.value||'';
-        const cant=parseFloat(tr.querySelector('.cant-inp')?.value)||0;
-        if(idProd&&cant>0) itemsSheets.push({idProd,nombre,cantidad:cant});
-      });
       if(itemsSheets.length){
         _setBusy(true);
         apiCall('grabarSalida', {fecha,ndoc,destino:dest,notas,items:itemsSheets})
@@ -1490,7 +1490,7 @@ function grabarSalida(){
             _setBusy(false);
             if(r&&r.errores&&r.errores.length) alert('⚠️ Sheets rechazó algunas salidas:\n'+r.errores.join('\n'));
             else if(!r||!r.ok) alert('⚠️ Error al grabar en Sheets:\n'+(r&&r.error||'desconocido'));
-            else _loadDashboardFromSheets();
+            else { _loadDashboardFromSheets(); _loadKardexFromSheets(); }
           })
           .catch(e=>{ _setBusy(false); alert('⚠️ Error de conexión:\n'+e.message); });
       }
@@ -1547,32 +1547,49 @@ function _loadMantenimientosFromSheets(){
     .then(r=>{
       _setBusy(false);
       if(r&&r.ok&&r.data){ DB.mantos=r.data; renderCtrlMant(); }
+      else { DB._mantosCargados=false; console.error('getMantenimientos error',r); renderCtrlMant(); }
     })
-    .catch(e=>{ _setBusy(false); console.error('getMantenimientos fail',e); renderCtrlMant(); });
+    .catch(e=>{ _setBusy(false); DB._mantosCargados=false; console.error('getMantenimientos fail',e); renderCtrlMant(); });
 }
 function _loadReportesFromSheets(){
   _setBusy(true);
   apiCall('getReportes')
-    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.reportes=r.data; renderReportes(); } })
-    .catch(e=>{ _setBusy(false); console.error('getReportes fail',e); });
+    .then(r=>{
+      _setBusy(false);
+      if(r&&r.ok&&r.data){ DB.reportes=r.data; renderReportes(); }
+      else { DB._reportesCargados=false; console.error('getReportes error',r); }
+    })
+    .catch(e=>{ _setBusy(false); DB._reportesCargados=false; console.error('getReportes fail',e); });
 }
 function _loadIngresosFromSheets(){
   _setBusy(true);
   apiCall('getIngresos')
-    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.ingresos=r.data; renderIngHist(); } })
-    .catch(e=>{ _setBusy(false); console.error('getIngresos fail',e); });
+    .then(r=>{
+      _setBusy(false);
+      if(r&&r.ok&&r.data){ DB.ingresos=r.data; renderIngHist(); }
+      else { DB._ingresosCargados=false; console.error('getIngresos error',r); }
+    })
+    .catch(e=>{ _setBusy(false); DB._ingresosCargados=false; console.error('getIngresos fail',e); });
 }
 function _loadSalidasFromSheets(){
   _setBusy(true);
   apiCall('getSalidas')
-    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.salidas=r.data; renderSalHist(); } })
-    .catch(e=>{ _setBusy(false); console.error('getSalidas fail',e); });
+    .then(r=>{
+      _setBusy(false);
+      if(r&&r.ok&&r.data){ DB.salidas=r.data; renderSalHist(); }
+      else { DB._salidasCargadas=false; console.error('getSalidas error',r); }
+    })
+    .catch(e=>{ _setBusy(false); DB._salidasCargadas=false; console.error('getSalidas fail',e); });
 }
 function _loadKardexFromSheets(){
   _setBusy(true);
   apiCall('getKardex')
-    .then(r=>{ _setBusy(false); if(r&&r.ok&&r.data){ DB.kardex=r.data; renderKardex(); actualizarKxDash(); } })
-    .catch(e=>{ _setBusy(false); console.error('getKardex fail',e); });
+    .then(r=>{
+      _setBusy(false);
+      if(r&&r.ok&&r.data){ DB.kardex=r.data; renderKardex(); actualizarKxDash(); }
+      else { DB._kardexCargado=false; console.error('getKardex error',r); }
+    })
+    .catch(e=>{ _setBusy(false); DB._kardexCargado=false; console.error('getKardex fail',e); });
 }
 </script>
 </body>
